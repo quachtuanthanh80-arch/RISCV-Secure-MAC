@@ -1,0 +1,64 @@
+# ==============================================================================
+# Git Ignore Configuration for RISC-V + Secure MAC Hardware SoC Project
+# ==============================================================================
+
+# Byte-compiled / Python Cache & Test Artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.pytest_cache/
+.coverage
+htmlcov/
+
+# Cocotb & Icarus Verilog Simulation Artifacts
+sim_build/
+*.vvp
+*.vcd
+*.fst
+results.xml
+*.result.xml
+a.out
+sim_output_vivado.txt
+
+# AMD Xilinx Vivado Synthesis & Implementation Runs, Caches & Logs
+*.jou
+*.log
+*.str
+.Xil/
+*.dcp.tmp
+*.cache/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.sim/
+.vmcp/
+*.wdb
+xsim.dir/
+usage_statistics_webtalk.*
+_xmsgs/
+
+# Microsoft Office Temporary Lock Files
+~$*.docx
+~$*.pptx
+~$*.xlsx
+
+# Operating System & Editor Artifacts
+.DS_Store
+Thumbs.db
+ehthumbs.db
+[Dd]esktop.ini
+*.swp
+*.bak
+*.tmp
+.vscode/
+.idea/
+
+# AI Agent Configuration
+.agents/
+AGENTS.md
+
+# Local Documentation, Research Papers & Academic Manuscripts (Kept locally, excluded from Git)
+tailieuthamkhao/
+docs/
+paper/
+

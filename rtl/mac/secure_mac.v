@@ -9,7 +9,8 @@ module secure_mac #(
     // Đối với một lớp mạng nơ-ron với K = 200 tích lũy, miền tích lũy vật lý hợp lệ
     // là [-3,276,800, +3,276,800]. Lỗi lật bit ở các bit MSB đẩy kết quả vượt quá ngưỡng này
     // sẽ được kích hoạt bẫy dị thường để Rollback tức thời.
-    parameter signed [OUT_WIDTH-1:0] ANOMALY_THRESHOLD = (OUT_WIDTH >= 32) ? 32'sd3276700 : {1'b0, {(OUT_WIDTH-2){1'b1}}, 1'b0}
+    parameter signed [OUT_WIDTH-1:0] ANOMALY_THRESHOLD = (OUT_WIDTH >= 32) ? 32'sd3276700 : {1'b0, {(OUT_WIDTH-2){1'b1}}, 1'b0},
+    parameter USE_ADAPTIVE_THRESHOLD = 0
 )(
     input  wire                 clk,
     input  wire                 rst_n,
@@ -28,18 +29,21 @@ module secure_mac #(
     reg signed [IN_WIDTH-1:0]  reg_a, reg_b;
     reg signed [OUT_WIDTH-1:0] reg_c;
     reg valid_d1;
+    reg valid_d1_n; // Dual-rail complementary control register for ISO 26262 ASIL D hardening
 
     wire signed [2*IN_WIDTH-1:0] product;
     wire signed [OUT_WIDTH-1:0]  mac_result;
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            reg_a <= 0;
-            reg_b <= 0;
-            reg_c <= 0;
-            valid_d1 <= 0;
+            reg_a      <= 0;
+            reg_b      <= 0;
+            reg_c      <= 0;
+            valid_d1   <= 0;
+            valid_d1_n <= 1;
         end else begin
-            valid_d1 <= start;
+            valid_d1   <= start;
+            valid_d1_n <= ~start;
             if (start) begin
                 reg_a <= a;
                 reg_b <= b;
@@ -71,6 +75,7 @@ module secure_mac #(
     reg [3:0]                   pipe_ab_mod3;
     reg [1:0]                   pipe_c_mod3;
     reg                         valid_d2;
+    reg                         valid_d2_n; // Dual-rail complementary register
 
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
@@ -79,8 +84,10 @@ module secure_mac #(
             pipe_ab_mod3 <= 0;
             pipe_c_mod3  <= 0;
             valid_d2     <= 0;
+            valid_d2_n   <= 1;
         end else begin
-            valid_d2 <= valid_d1;
+            valid_d2   <= valid_d1;
+            valid_d2_n <= ~valid_d1;
             if (valid_d1) begin
                 pipe_product <= product;
                 pipe_c       <= reg_c;
@@ -90,7 +97,6 @@ module secure_mac #(
         end
     end
 
- 
     // TẦNG PIPELINE 2.5: Khối tổ hợp 2
     
     assign mac_result = pipe_product + pipe_c;
@@ -114,16 +120,41 @@ module secure_mac #(
     end
     assign expected_mod3 = expected_mod3_reg;
 
-    // Khối phát hiện lỗi: Kết hợp Modulo-3 CED và Bộ kiểm tra Double-Check Ngưỡng An toàn (Sanity Check)
+    // Khối phát hiện lỗi: Modulo-3 CED + ML Adaptive Range Anomaly + Dual-Rail Control Parity
     wire mod3_mismatch = (expected_mod3 != out_mod3);
     
-    // Sanity / Range Anomaly Detection: Phát hiện lỗi tích lũy vượt ngưỡng cực biên bất thường
-    wire range_anomaly = (mac_result > ANOMALY_THRESHOLD || mac_result < -ANOMALY_THRESHOLD);
+    // ML-Guided Online Adaptive Range Anomaly Detection (EWMA + MAD 3-sigma)
+    wire signed [OUT_WIDTH-1:0] adaptive_threshold;
+    wire signed [OUT_WIDTH-1:0] ewma_mean;
+    wire signed [OUT_WIDTH-1:0] ewma_mad;
+    wire                        ewma_warmup_done;
 
-    // Tín hiệu kích hoạt Rollback khi Modulo-3 không khớp hoặc phát hiện dị thường
-    wire disagreement = mod3_mismatch | range_anomaly;
+    ewma_tracker #(
+        .WIDTH(OUT_WIDTH),
+        .ALPHA_SHIFT(4),
+        .WARMUP_SAMPLES(16),
+        .DEFAULT_THRESHOLD(ANOMALY_THRESHOLD),
+        .MIN_THRESHOLD_FLOOR((OUT_WIDTH >= 32) ? 32'sd2000 : 16'sd500)
+    ) u_ewma (
+        .clk(clk),
+        .rst_n(rst_n),
+        .data_in(mac_result),
+        .valid_in(valid_d2 & ~mod3_mismatch),
+        .threshold_out(adaptive_threshold),
+        .mean_out(ewma_mean),
+        .mad_out(ewma_mad),
+        .warmup_done_out(ewma_warmup_done)
+    );
 
-    
+    wire signed [OUT_WIDTH-1:0] active_threshold = (USE_ADAPTIVE_THRESHOLD) ? adaptive_threshold : ANOMALY_THRESHOLD;
+    wire range_anomaly = (mac_result > active_threshold || mac_result < -active_threshold);
+
+    // Control Path Integrity: Phát hiện SEU làm sai lệch trạng thái pipeline control
+    wire control_fault = (valid_d1 == valid_d1_n) || (valid_d2 == valid_d2_n);
+
+    // Tín hiệu kích hoạt Rollback khi Modulo-3 không khớp, dị thường biên, hoặc lỗi điều khiển
+    wire disagreement = mod3_mismatch | range_anomaly | control_fault;
+
     // TẦNG PIPELINE 3: Thanh ghi ngõ ra, Cờ lỗi & Khôi phục trạng thái
    
     reg signed [OUT_WIDTH-1:0] shadow_accumulator;
@@ -136,10 +167,10 @@ module secure_mac #(
             rollback           <= 0;
             valid              <= 0;
         end else begin
-            valid <= valid_d2;
-            if (valid_d2) begin
+            valid <= valid_d2 & (~control_fault);
+            if (valid_d2 || control_fault) begin
                 if (disagreement) begin
-                    // Lỗi được phát hiện -> Kích hoạt Rollback
+                    // Lỗi được phát hiện -> Kích hoạt Rollback tức thời
                     out            <= shadow_accumulator; // Khôi phục giá trị cũ hợp lệ
                     fault_detected <= 1'b1;
                     rollback       <= 1'b1;

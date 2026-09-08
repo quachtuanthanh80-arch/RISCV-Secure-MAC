@@ -18,11 +18,12 @@ Thư mục chứa toàn bộ dữ liệu thực nghiệm, báo cáo phân tích 
 ## 🖼️ Danh mục Đồ thị Khoa học (300+ DPI Figures for IEEE Paper)
 
 Trong thư mục [`reports/figures/`](file:///d:/NCKH/reports/figures):
-1. **[`fig1_single_bit_fdr.png`](file:///d:/NCKH/reports/figures/fig1_single_bit_fdr.png)**: Biểu đồ cột độ phủ lỗi đơn (FDR = 100.00% trên cả 32 bit) và độ chính xác State Rollback (100.00%).
-2. **[`fig2_bit_distance_parity_spectrum.png`](file:///d:/NCKH/reports/figures/fig2_bit_distance_parity_spectrum.png)**: Phổ phát hiện lỗi 2-bit theo khoảng cách bit (Bit-Distance Parity Spectrum) — Khẳng định tính đối xứng $d$ chẵn = 100% FDR, $d$ lẻ = 0% FDR.
-3. **[`fig3_fault_classification_breakdown.png`](file:///d:/NCKH/reports/figures/fig3_fault_classification_breakdown.png)**: Biểu đồ Donut phân bổ 496 cặp lỗi 2-bit và độ bao phủ lỗi FDR/Rollback 100% trên 5 khối con Secure MAC.
-4. **[`fig4_multibit_burst_scaling.png`](file:///d:/NCKH/reports/figures/fig4_multibit_burst_scaling.png)**: Biểu đồ đường phân tích lỗi cụm đa bit ($k = 1..6$ bit) tiệm cận ngưỡng lý thuyết $2/3 \approx 66.67\%$.
-5. **[`fig5_fpga_ppa_implementation.png`](file:///d:/NCKH/reports/figures/fig5_fpga_ppa_implementation.png)**: Bảng và đồ thị 4 panel PPA phần cứng sau tổng hợp và thực thi trên FPGA Xilinx Zynq-7000 (Tài nguyên, Slack @ 100MHz, $F_{max}$, Công suất).
+1. **[`fig3_1_fpga_ppa_implementation.png`](file:///d:/NCKH/reports/figures/fig3_1_fpga_ppa_implementation.png)**: Bảng và đồ thị 4 panel PPA phần cứng sau tổng hợp và thực thi trên FPGA Xilinx Zynq-7000 (Tài nguyên, Slack @ 100MHz, $F_{max}$, Công suất).
+2. **[`fig3_2_single_bit_fdr.png`](file:///d:/NCKH/reports/figures/fig3_2_single_bit_fdr.png)**: Biểu đồ cột độ phủ lỗi đơn (FDR = 100.00% trên cả 32 bit) và độ chính xác State Rollback (100.00%).
+3. **[`fig3_3_bit_distance_parity_spectrum.png`](file:///d:/NCKH/reports/figures/fig3_3_bit_distance_parity_spectrum.png)**: Phổ phát hiện lỗi 2-bit theo khoảng cách bit (Bit-Distance Parity Spectrum) — Khẳng định tính đối xứng $d$ chẵn = 100% FDR, $d$ lẻ = 0% FDR.
+4. **[`fig3_4_fault_classification_breakdown.png`](file:///d:/NCKH/reports/figures/fig3_4_fault_classification_breakdown.png)**: Biểu đồ Donut phân bổ 496 cặp lỗi 2-bit và độ bao phủ lỗi FDR/Rollback 100% trên 5 khối con Secure MAC.
+5. **[`fig3_5_multibit_burst_scaling.png`](file:///d:/NCKH/reports/figures/fig3_5_multibit_burst_scaling.png)**: Biểu đồ đường phân tích lỗi cụm đa bit ($k = 1..6$ bit) tiệm cận ngưỡng lý thuyết $2/3 \approx 66.67\%$.
+
 
 ---
 

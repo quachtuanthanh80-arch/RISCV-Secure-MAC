@@ -48,7 +48,7 @@ def main():
         ("5. Cocotb RV32I ISA Compliance Suite (7 Micro-Programs)", py_cmd + [str(root_dir / "tb" / "cocotb" / "riscv_isa" / "run_tests.py")]),
         
         # 6. Validates normal operation and fault-tolerance of Secure MAC
-        ("6. Cocotb Secure MAC Tests & Modulo-3 Coverage (9 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac" / "run_mac_tests.py")]),
+        ("6. Cocotb Secure MAC Tests & Modulo-3 Coverage (10 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac" / "run_mac_tests.py")]),
         
         # 7. Complete SoC integration testing
         ("7. Cocotb SoC System Integration Tests (4 End-to-End Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "top_module" / "run_top_tests.py")]),
@@ -61,6 +61,18 @@ def main():
         
         # 10. AI workload resilience benchmark
         ("10. Cocotb AI Inference Resilience Benchmark (INT8 FC Layer)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac" / "run_ai_resilience_test.py")]),
+
+        # 11. Secure MAC AXI4-Lite IP test suite (Protocol, Byte Strobes, SLVERR)
+        ("11. Cocotb Secure MAC AXI4-Lite IP Suite (6 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac_axi" / "run_tests.py")]),
+
+        # 12. Dedicated AXI4-Lite Crossbar Interconnect test suite (Routing, DECERR)
+        ("12. Cocotb AXI4-Lite Crossbar Interconnect Suite (3 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "axi_interconnect" / "run_tests.py")]),
+
+        # 13. Full AXI-Lite SoC System Integration Suite
+        ("13. Cocotb Full AXI-Lite SoC Integration Suite (4 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "top_module_axi" / "run_tests.py")]),
+
+        # 14. End-to-End Real-World Digits MLP AXI Inference Resilience Benchmark
+        ("14. Cocotb Digits MLP AXI Resilience Benchmark (2 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac_axi" / "run_ml_inference_test.py")]),
     ]
     
     results = []
@@ -91,7 +103,7 @@ def main():
         print(f"Note: Could not generate master report: {e}")
 
     if all_passed:
-        print("\n[SUCCESS] ALL 10 COMPREHENSIVE VERIFICATION SUITES PASSED (100% SUCCESS)!\n")
+        print("\n[SUCCESS] ALL 14 COMPREHENSIVE VERIFICATION SUITES PASSED (100% SUCCESS)!\n")
         sys.exit(0)
     else:
         print("\n[FAIL] SOME TESTS FAILED. PLEASE CHECK LOGS ABOVE.\n")

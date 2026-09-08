@@ -35,16 +35,20 @@ def generate_report(test_results: list[tuple[str, bool, float]], output_path: Pa
 """
 
     suite_meta = {
-        0: ("PySlang AST & Semantic Lint", "21 RTL files", "[PASS]"),
+        0: ("PySlang AST & Semantic Lint", "26 RTL files", "[PASS]"),
         1: ("Cocotb + cocotb-coverage", "30 Corner cases", "[PASS]"),
         2: ("Cocotb + Hazard SVA", "13 Hazard cases", "[PASS]"),
         3: ("Cocotb Sub-Units", "8 Unit cases", "[PASS]"),
         4: ("Cocotb RV32I ISA Compliance", "7 Micro-programs", "[PASS]"),
-        5: ("Cocotb + Modulo-3 Coverage", "9 MAC cases", "[PASS]"),
+        5: ("Cocotb + Modulo-3 Coverage", "10 MAC cases", "[PASS]"),
         6: ("Cocotb SoC Integration", "4 End-to-End cases", "[PASS]"),
         7: ("Icarus Verilog Self-Checking TB", "2 SystemVerilog TBs", "[PASS]"),
         8: ("Cocotb Monte Carlo Fault Injection", "4,400 Trials", "[PASS]"),
         9: ("Cocotb INT8 AI Inference Benchmark", "FC Layer Workload", "[PASS]"),
+        10: ("Cocotb AXI4-Lite Protocol & Registers", "6 AXI IP cases", "[PASS]"),
+        11: ("Cocotb AXI Crossbar Interconnect", "3 Routing/DECERR cases", "[PASS]"),
+        12: ("Cocotb Full AXI SoC Integration", "4 End-to-End AXI cases", "[PASS]"),
+        13: ("Cocotb Digits MLP AXI Resilience Benchmark", "100 AI Samples", "[PASS]"),
     }
 
     for idx, (name, passed, elapsed) in enumerate(test_results):

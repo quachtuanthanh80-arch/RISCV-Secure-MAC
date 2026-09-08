@@ -33,6 +33,7 @@ def test_secure_mac_runner():
     
     sources = [
         root_dir / "rtl" / "mac" / "secure_mac_sva.sv",
+        root_dir / "rtl" / "mac" / "ewma_tracker.sv",
         root_dir / "rtl" / "mac" / "secure_mac.v",
     ]
     for src in sources:

@@ -75,11 +75,101 @@ module riscv_cpu (
     logic stall_IF, stall_ID, flush_ID, flush_EX;
     logic [1:0] forwardA_EX, forwardB_EX;
 
+    //--- RISC-V Privileged Architecture CSRs (Machine-Mode) ------------------
+    localparam logic [11:0] CSR_MSTATUS = 12'h300;
+    localparam logic [11:0] CSR_MIE     = 12'h304;
+    localparam logic [11:0] CSR_MTVEC   = 12'h305;
+    localparam logic [11:0] CSR_MEPC    = 12'h341;
+    localparam logic [11:0] CSR_MCAUSE  = 12'h342;
+    localparam logic [11:0] CSR_MIP     = 12'h344;
+
+    logic [31:0] csr_mstatus;
+    logic [31:0] csr_mie;
+    logic [31:0] csr_mtvec;
+    logic [31:0] csr_mepc;
+    logic [31:0] csr_mcause;
+    logic [31:0] csr_mip;
+
+    assign csr_mip = {20'b0, irq, 11'b0}; // MEIP is bit 11
+
+    wire trap_pending = csr_mip[11] & csr_mie[11] & csr_mstatus[3];
+
+    wire is_system = (opcode == 7'b1110011);
+    wire is_mret   = is_system && (funct3 == 3'b000) && (funct7 == 7'b0011000);
+    wire is_csrrw  = is_system && (funct3 == 3'b001);
+    wire is_csrrs  = is_system && (funct3 == 3'b010);
+    wire is_csrrc  = is_system && (funct3 == 3'b011);
+    wire is_csr_op = is_csrrw | is_csrrs | is_csrrc;
+
+    wire [11:0] csr_addr = Instr_ID[31:20];
+    logic [31:0] csr_rdata;
+
+    always_comb begin
+        case (csr_addr)
+            CSR_MSTATUS: csr_rdata = csr_mstatus;
+            CSR_MIE:     csr_rdata = csr_mie;
+            CSR_MTVEC:   csr_rdata = csr_mtvec;
+            CSR_MEPC:    csr_rdata = csr_mepc;
+            CSR_MCAUSE:  csr_rdata = csr_mcause;
+            CSR_MIP:     csr_rdata = csr_mip;
+            default:     csr_rdata = 32'd0;
+        endcase
+    end
+
+    // CSR State Management & Trap Execution
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            csr_mstatus <= 32'h0000_0000;
+            csr_mie     <= 32'h0000_0000;
+            csr_mtvec   <= 32'h0000_0040;
+            csr_mepc    <= 32'h0000_0000;
+            csr_mcause  <= 32'h0000_0000;
+        end else begin
+            if (trap_pending && !stall_ID) begin
+                csr_mepc       <= PC_IF;
+                csr_mcause     <= 32'h8000_000B; // Machine External Interrupt
+                csr_mstatus[7] <= csr_mstatus[3]; // MPIE <= MIE
+                csr_mstatus[3] <= 1'b0;          // Clear MIE
+            end else if (is_mret) begin
+                csr_mstatus[3] <= csr_mstatus[7]; // MIE <= MPIE
+                csr_mstatus[7] <= 1'b1;          // MPIE <= 1
+            end else if (is_csr_op && !stall_ID) begin
+                case (csr_addr)
+                    CSR_MSTATUS: begin
+                        if (is_csrrw) csr_mstatus <= rs1_data_ID;
+                        else if (is_csrrs) csr_mstatus <= csr_mstatus | rs1_data_ID;
+                        else if (is_csrrc) csr_mstatus <= csr_mstatus & ~rs1_data_ID;
+                    end
+                    CSR_MIE: begin
+                        if (is_csrrw) csr_mie <= rs1_data_ID;
+                        else if (is_csrrs) csr_mie <= csr_mie | rs1_data_ID;
+                        else if (is_csrrc) csr_mie <= csr_mie & ~rs1_data_ID;
+                    end
+                    CSR_MTVEC: begin
+                        if (is_csrrw) csr_mtvec <= rs1_data_ID;
+                        else if (is_csrrs) csr_mtvec <= csr_mtvec | rs1_data_ID;
+                    end
+                    CSR_MEPC: begin
+                        if (is_csrrw) csr_mepc <= rs1_data_ID;
+                    end
+                    CSR_MCAUSE: begin
+                        if (is_csrrw) csr_mcause <= rs1_data_ID;
+                    end
+                    default: ;
+                endcase
+            end
+        end
+    end
+
     // TẦNG 1: NẠP LỆNH (IF)
     assign PCPlus4_IF = PC_IF + 32'd4;
     
     always_comb begin
-        if (branch_taken_ID || Jump_ID) begin
+        if (trap_pending) begin
+            PCNext_IF = csr_mtvec;
+        end else if (is_mret) begin
+            PCNext_IF = csr_mepc;
+        end else if (branch_taken_ID || Jump_ID) begin
             PCNext_IF = PCTarget_ID;
         end else begin
             PCNext_IF = PCPlus4_IF;
@@ -100,11 +190,12 @@ module riscv_cpu (
     );
     
     // TẦNG PIPELINE: IF/ID
+    wire flush_IF_ID = flush_ID | trap_pending | is_mret;
     pipe_if_id u_pipe_if_id (
         .clk        (clk),
         .rst_n      (rst_n),
         .stall      (stall_ID),
-        .flush      (flush_ID),
+        .flush      (flush_IF_ID),
         .pc_in      (PC_IF),
         .instr_in   (Instr_IF),
         .pc_out     (PC_ID),
@@ -178,26 +269,49 @@ module riscv_cpu (
     // Lệnh JALR có đích là rs1 + imm. Lệnh Branch/JAL có đích là PC + imm.
     assign PCTarget_ID = (opcode == 7'b1100111) ? (rs1_data_ID + Imm_ID) : (PC_ID + Imm_ID);
     
+    logic RegWrite_ID_eff;
+    logic [1:0] ResultSrc_ID_eff, ALUSrcA_ID_eff, ALUSrcB_ID_eff;
+    logic [3:0] ALUOp_ID_eff;
+    logic [31:0] Imm_ID_eff;
+
+    always_comb begin
+        if (is_csr_op) begin
+            Imm_ID_eff       = csr_rdata;
+            RegWrite_ID_eff  = (rd_addr_ID != 5'd0);
+            ResultSrc_ID_eff = 2'b00;
+            ALUSrcA_ID_eff   = 2'b10; // 0
+            ALUSrcB_ID_eff   = 2'b01; // imm
+            ALUOp_ID_eff     = 4'b0000; // ADD
+        end else begin
+            Imm_ID_eff       = Imm_ID;
+            RegWrite_ID_eff  = RegWrite_ID;
+            ResultSrc_ID_eff = ResultSrc_ID;
+            ALUSrcA_ID_eff   = ALUSrcA_ID;
+            ALUSrcB_ID_eff   = ALUSrcB_ID;
+            ALUOp_ID_eff     = ALUOp_ID;
+        end
+    end
+
     // TẦNG PIPELINE: ID/EX
     pipe_id_ex u_pipe_id_ex (
         .clk           (clk),
         .rst_n         (rst_n),
-        .flush         (flush_EX),
+        .flush         (flush_EX | trap_pending),
         
-        .RegWrite_in   (RegWrite_ID),
-        .ResultSrc_in  (ResultSrc_ID),
+        .RegWrite_in   (RegWrite_ID_eff),
+        .ResultSrc_in  (ResultSrc_ID_eff),
         .MemWrite_in   (MemWrite_ID),
         .MemRead_in    (MemRead_ID),
         .Branch_in     (Branch_ID),
         .Jump_in       (Jump_ID),
-        .ALUSrcA_in    (ALUSrcA_ID),
-        .ALUSrcB_in    (ALUSrcB_ID),
-        .ALUOp_in      (ALUOp_ID),
+        .ALUSrcA_in    (ALUSrcA_ID_eff),
+        .ALUSrcB_in    (ALUSrcB_ID_eff),
+        .ALUOp_in      (ALUOp_ID_eff),
         
         .pc_in         (PC_ID),
         .rs1_data_in   (rs1_data_ID),
         .rs2_data_in   (rs2_data_ID),
-        .imm_in        (Imm_ID),
+        .imm_in        (Imm_ID_eff),
         .rs1_addr_in   (rs1_addr_ID),
         .rs2_addr_in   (rs2_addr_ID),
         .rd_addr_in    (rd_addr_ID),

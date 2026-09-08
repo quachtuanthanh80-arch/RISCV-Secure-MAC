@@ -1,0 +1,1252 @@
+{
+  "nodes": {
+    "IN_WIDTH": {
+      "node_name": "IN_WIDTH",
+      "kind": "parameter",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 3,
+      "in_degree": 0,
+      "out_degree": 0,
+      "degree_centrality": 0.0,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.0,
+      "vulnerability_score": 0.112,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "OUT_WIDTH": {
+      "node_name": "OUT_WIDTH",
+      "kind": "parameter",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 3,
+      "in_degree": 0,
+      "out_degree": 0,
+      "degree_centrality": 0.0,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.0,
+      "vulnerability_score": 0.112,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "ANOMALY_THRESHOLD": {
+      "node_name": "ANOMALY_THRESHOLD",
+      "kind": "parameter",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 3,
+      "in_degree": 0,
+      "out_degree": 0,
+      "degree_centrality": 0.0,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.0,
+      "vulnerability_score": 0.112,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "USE_ADAPTIVE_THRESHOLD": {
+      "node_name": "USE_ADAPTIVE_THRESHOLD",
+      "kind": "parameter",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 3,
+      "in_degree": 0,
+      "out_degree": 0,
+      "degree_centrality": 0.0,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.0,
+      "vulnerability_score": 0.112,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "clk": {
+      "node_name": "clk",
+      "kind": "net",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 1,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 0,
+      "in_degree": 0,
+      "out_degree": 14,
+      "degree_centrality": 0.2692307692307693,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.0,
+      "vulnerability_score": 0.05,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "rst_n": {
+      "node_name": "rst_n",
+      "kind": "net",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 1,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 0,
+      "in_degree": 0,
+      "out_degree": 3,
+      "degree_centrality": 0.057692307692307696,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.0,
+      "vulnerability_score": 0.05,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "a": {
+      "node_name": "a",
+      "kind": "net",
+      "bit_width": 8,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 0,
+      "in_degree": 0,
+      "out_degree": 1,
+      "degree_centrality": 0.019230769230769232,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.0,
+      "vulnerability_score": 0.196,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "b": {
+      "node_name": "b",
+      "kind": "net",
+      "bit_width": 8,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 0,
+      "in_degree": 0,
+      "out_degree": 1,
+      "degree_centrality": 0.019230769230769232,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.0,
+      "vulnerability_score": 0.196,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "c": {
+      "node_name": "c",
+      "kind": "net",
+      "bit_width": 32,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 0,
+      "in_degree": 0,
+      "out_degree": 1,
+      "degree_centrality": 0.019230769230769232,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.0,
+      "vulnerability_score": 0.484,
+      "criticality_tier": "HIGH",
+      "recommended_protection": "Ring-Homomorphic Modulo-3 CED + Adaptive EWMA"
+    },
+    "start": {
+      "node_name": "start",
+      "kind": "net",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 1,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 0,
+      "in_degree": 0,
+      "out_degree": 2,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.0,
+      "vulnerability_score": 0.1,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "out": {
+      "node_name": "out",
+      "kind": "variable",
+      "bit_width": 32,
+      "is_register": 1,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 3,
+      "in_degree": 4,
+      "out_degree": 0,
+      "degree_centrality": 0.07692307692307693,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.18472527472527472,
+      "vulnerability_score": 0.75,
+      "criticality_tier": "CRITICAL",
+      "recommended_protection": "Selective Local TMR + Shadow Checkpoint"
+    },
+    "fault_detected": {
+      "node_name": "fault_detected",
+      "kind": "variable",
+      "bit_width": 1,
+      "is_register": 1,
+      "is_control": 1,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 3,
+      "in_degree": 2,
+      "out_degree": 0,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.15698587127158556,
+      "vulnerability_score": 0.312,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "valid": {
+      "node_name": "valid",
+      "kind": "variable",
+      "bit_width": 1,
+      "is_register": 1,
+      "is_control": 1,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 3,
+      "in_degree": 1,
+      "out_degree": 0,
+      "degree_centrality": 0.019230769230769232,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.019230769230769232,
+      "vulnerability_score": 0.2,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "rollback": {
+      "node_name": "rollback",
+      "kind": "variable",
+      "bit_width": 1,
+      "is_register": 1,
+      "is_control": 1,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 3,
+      "in_degree": 2,
+      "out_degree": 0,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.15698587127158556,
+      "vulnerability_score": 0.312,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "reg_a": {
+      "node_name": "reg_a",
+      "kind": "variable",
+      "bit_width": 8,
+      "is_register": 1,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 1,
+      "pipeline_stage": 1,
+      "in_degree": 3,
+      "out_degree": 2,
+      "degree_centrality": 0.09615384615384616,
+      "betweenness_centrality": 0.012820512820512822,
+      "closeness_centrality": 0.057692307692307696,
+      "vulnerability_score": 0.25,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "reg_b": {
+      "node_name": "reg_b",
+      "kind": "variable",
+      "bit_width": 8,
+      "is_register": 1,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 1,
+      "pipeline_stage": 1,
+      "in_degree": 3,
+      "out_degree": 2,
+      "degree_centrality": 0.09615384615384616,
+      "betweenness_centrality": 0.012820512820512822,
+      "closeness_centrality": 0.057692307692307696,
+      "vulnerability_score": 0.25,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "reg_c": {
+      "node_name": "reg_c",
+      "kind": "variable",
+      "bit_width": 32,
+      "is_register": 1,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 1,
+      "pipeline_stage": 1,
+      "in_degree": 3,
+      "out_degree": 2,
+      "degree_centrality": 0.09615384615384616,
+      "betweenness_centrality": 0.019230769230769232,
+      "closeness_centrality": 0.057692307692307696,
+      "vulnerability_score": 0.35,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "valid_d1": {
+      "node_name": "valid_d1",
+      "kind": "variable",
+      "bit_width": 1,
+      "is_register": 1,
+      "is_control": 1,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 1,
+      "in_degree": 2,
+      "out_degree": 2,
+      "degree_centrality": 0.07692307692307693,
+      "betweenness_centrality": 0.005467571644042233,
+      "closeness_centrality": 0.038461538461538464,
+      "vulnerability_score": 0.3,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "valid_d1_n": {
+      "node_name": "valid_d1_n",
+      "kind": "variable",
+      "bit_width": 1,
+      "is_register": 1,
+      "is_control": 1,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 1,
+      "in_degree": 2,
+      "out_degree": 2,
+      "degree_centrality": 0.07692307692307693,
+      "betweenness_centrality": 0.0020739064856711916,
+      "closeness_centrality": 0.038461538461538464,
+      "vulnerability_score": 0.312,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "product": {
+      "node_name": "product",
+      "kind": "net",
+      "bit_width": 16,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 1,
+      "in_degree": 2,
+      "out_degree": 1,
+      "degree_centrality": 0.057692307692307696,
+      "betweenness_centrality": 0.027526395173454,
+      "closeness_centrality": 0.06923076923076923,
+      "vulnerability_score": 0.292,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "mac_result": {
+      "node_name": "mac_result",
+      "kind": "net",
+      "bit_width": 32,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 2,
+      "out_degree": 5,
+      "degree_centrality": 0.13461538461538464,
+      "betweenness_centrality": 0.06334841628959276,
+      "closeness_centrality": 0.0831043956043956,
+      "vulnerability_score": 0.65,
+      "criticality_tier": "HIGH",
+      "recommended_protection": "Ring-Homomorphic Modulo-3 CED + Adaptive EWMA"
+    },
+    "a_mod3": {
+      "node_name": "a_mod3",
+      "kind": "net",
+      "bit_width": 2,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 1,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 1,
+      "in_degree": 1,
+      "out_degree": 1,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.0111236802413273,
+      "closeness_centrality": 0.04006410256410257,
+      "vulnerability_score": 0.124,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "b_mod3": {
+      "node_name": "b_mod3",
+      "kind": "net",
+      "bit_width": 2,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 1,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 1,
+      "in_degree": 1,
+      "out_degree": 1,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.0111236802413273,
+      "closeness_centrality": 0.04006410256410257,
+      "vulnerability_score": 0.124,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "c_mod3": {
+      "node_name": "c_mod3",
+      "kind": "net",
+      "bit_width": 2,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 1,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 1,
+      "in_degree": 1,
+      "out_degree": 1,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.01583710407239819,
+      "closeness_centrality": 0.038461538461538464,
+      "vulnerability_score": 0.124,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "reg_c_32": {
+      "node_name": "reg_c_32",
+      "kind": "net",
+      "bit_width": 32,
+      "is_register": 1,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 1,
+      "pipeline_stage": 1,
+      "in_degree": 1,
+      "out_degree": 1,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.006787330316742082,
+      "closeness_centrality": 0.04395604395604396,
+      "vulnerability_score": 0.684,
+      "criticality_tier": "HIGH",
+      "recommended_protection": "Ring-Homomorphic Modulo-3 CED + Adaptive EWMA"
+    },
+    "u_enc_a": {
+      "node_name": "u_enc_a",
+      "kind": "instance",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 1,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 1,
+      "in_degree": 1,
+      "out_degree": 1,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.006221719457013575,
+      "closeness_centrality": 0.04395604395604396,
+      "vulnerability_score": 0.112,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "u_enc_b": {
+      "node_name": "u_enc_b",
+      "kind": "instance",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 1,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 1,
+      "in_degree": 1,
+      "out_degree": 1,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.006221719457013575,
+      "closeness_centrality": 0.04395604395604396,
+      "vulnerability_score": 0.112,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "u_enc_c": {
+      "node_name": "u_enc_c",
+      "kind": "instance",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 1,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 1,
+      "in_degree": 1,
+      "out_degree": 1,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.011689291101055807,
+      "closeness_centrality": 0.04006410256410257,
+      "vulnerability_score": 0.112,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "ab_mod3_product": {
+      "node_name": "ab_mod3_product",
+      "kind": "net",
+      "bit_width": 4,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 1,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 1,
+      "in_degree": 2,
+      "out_degree": 1,
+      "degree_centrality": 0.057692307692307696,
+      "betweenness_centrality": 0.03129713423831071,
+      "closeness_centrality": 0.06868131868131869,
+      "vulnerability_score": 0.148,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "pipe_product": {
+      "node_name": "pipe_product",
+      "kind": "variable",
+      "bit_width": 16,
+      "is_register": 1,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 1,
+      "pipeline_stage": 2,
+      "in_degree": 2,
+      "out_degree": 1,
+      "degree_centrality": 0.057692307692307696,
+      "betweenness_centrality": 0.03374811463046757,
+      "closeness_centrality": 0.06282051282051282,
+      "vulnerability_score": 0.51,
+      "criticality_tier": "HIGH",
+      "recommended_protection": "Ring-Homomorphic Modulo-3 CED + Adaptive EWMA"
+    },
+    "pipe_c": {
+      "node_name": "pipe_c",
+      "kind": "variable",
+      "bit_width": 32,
+      "is_register": 1,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 1,
+      "pipeline_stage": 2,
+      "in_degree": 2,
+      "out_degree": 1,
+      "degree_centrality": 0.057692307692307696,
+      "betweenness_centrality": 0.020927601809954753,
+      "closeness_centrality": 0.05128205128205128,
+      "vulnerability_score": 0.52,
+      "criticality_tier": "HIGH",
+      "recommended_protection": "Ring-Homomorphic Modulo-3 CED + Adaptive EWMA"
+    },
+    "pipe_ab_mod3": {
+      "node_name": "pipe_ab_mod3",
+      "kind": "variable",
+      "bit_width": 4,
+      "is_register": 1,
+      "is_control": 0,
+      "is_residue": 1,
+      "is_pipeline_boundary": 1,
+      "pipeline_stage": 2,
+      "in_degree": 2,
+      "out_degree": 1,
+      "degree_centrality": 0.057692307692307696,
+      "betweenness_centrality": 0.03431372549019608,
+      "closeness_centrality": 0.06648351648351648,
+      "vulnerability_score": 0.22,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "pipe_c_mod3": {
+      "node_name": "pipe_c_mod3",
+      "kind": "variable",
+      "bit_width": 2,
+      "is_register": 1,
+      "is_control": 0,
+      "is_residue": 1,
+      "is_pipeline_boundary": 1,
+      "pipeline_stage": 2,
+      "in_degree": 2,
+      "out_degree": 1,
+      "degree_centrality": 0.057692307692307696,
+      "betweenness_centrality": 0.020361990950226245,
+      "closeness_centrality": 0.044871794871794865,
+      "vulnerability_score": 0.22,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "valid_d2": {
+      "node_name": "valid_d2",
+      "kind": "variable",
+      "bit_width": 1,
+      "is_register": 1,
+      "is_control": 1,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 1,
+      "out_degree": 2,
+      "degree_centrality": 0.057692307692307696,
+      "betweenness_centrality": 0.006033182503770739,
+      "closeness_centrality": 0.03461538461538462,
+      "vulnerability_score": 0.3,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "valid_d2_n": {
+      "node_name": "valid_d2_n",
+      "kind": "variable",
+      "bit_width": 1,
+      "is_register": 1,
+      "is_control": 1,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 1,
+      "out_degree": 1,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.03461538461538462,
+      "vulnerability_score": 0.312,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "out_mod3": {
+      "node_name": "out_mod3",
+      "kind": "net",
+      "bit_width": 2,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 1,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 1,
+      "out_degree": 1,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.013197586726998492,
+      "closeness_centrality": 0.05625717566016073,
+      "vulnerability_score": 0.28,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "expected_mod3": {
+      "node_name": "expected_mod3",
+      "kind": "net",
+      "bit_width": 2,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 1,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 1,
+      "out_degree": 1,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.05467571644042232,
+      "closeness_centrality": 0.07189072609633357,
+      "vulnerability_score": 0.28,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "mac_result_32": {
+      "node_name": "mac_result_32",
+      "kind": "net",
+      "bit_width": 32,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 1,
+      "out_degree": 1,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.013197586726998492,
+      "closeness_centrality": 0.06923076923076923,
+      "vulnerability_score": 0.484,
+      "criticality_tier": "HIGH",
+      "recommended_protection": "Ring-Homomorphic Modulo-3 CED + Adaptive EWMA"
+    },
+    "u_enc_out": {
+      "node_name": "u_enc_out",
+      "kind": "instance",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 1,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 1,
+      "out_degree": 1,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.013574660633484163,
+      "closeness_centrality": 0.06132075471698113,
+      "vulnerability_score": 0.112,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "rns_calc": {
+      "node_name": "rns_calc",
+      "kind": "net",
+      "bit_width": 4,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 1,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 2,
+      "out_degree": 1,
+      "degree_centrality": 0.057692307692307696,
+      "betweenness_centrality": 0.05920060331825038,
+      "closeness_centrality": 0.0916289592760181,
+      "vulnerability_score": 0.2,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "expected_mod3_reg": {
+      "node_name": "expected_mod3_reg",
+      "kind": "variable",
+      "bit_width": 2,
+      "is_register": 1,
+      "is_control": 0,
+      "is_residue": 1,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 1,
+      "out_degree": 1,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.057315233785822026,
+      "closeness_centrality": 0.07979664014146773,
+      "vulnerability_score": 0.28,
+      "criticality_tier": "MEDIUM",
+      "recommended_protection": "Dual-Rail Complementary Hardening"
+    },
+    "mod3_mismatch": {
+      "node_name": "mod3_mismatch",
+      "kind": "net",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 1,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 2,
+      "out_degree": 2,
+      "degree_centrality": 0.07692307692307693,
+      "betweenness_centrality": 0.06636500754147813,
+      "closeness_centrality": 0.1047008547008547,
+      "vulnerability_score": 0.15,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "adaptive_threshold": {
+      "node_name": "adaptive_threshold",
+      "kind": "net",
+      "bit_width": 32,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 1,
+      "out_degree": 1,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.02187028657616893,
+      "closeness_centrality": 0.12692307692307692,
+      "vulnerability_score": 0.18,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "ewma_mean": {
+      "node_name": "ewma_mean",
+      "kind": "net",
+      "bit_width": 32,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 1,
+      "out_degree": 0,
+      "degree_centrality": 0.019230769230769232,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.12692307692307692,
+      "vulnerability_score": 0.15,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "ewma_mad": {
+      "node_name": "ewma_mad",
+      "kind": "net",
+      "bit_width": 32,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 1,
+      "out_degree": 0,
+      "degree_centrality": 0.019230769230769232,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.12692307692307692,
+      "vulnerability_score": 0.15,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "ewma_warmup_done": {
+      "node_name": "ewma_warmup_done",
+      "kind": "net",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 1,
+      "out_degree": 0,
+      "degree_centrality": 0.019230769230769232,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.12692307692307692,
+      "vulnerability_score": 0.112,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "u_ewma": {
+      "node_name": "u_ewma",
+      "kind": "instance",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 3,
+      "out_degree": 4,
+      "degree_centrality": 0.13461538461538464,
+      "betweenness_centrality": 0.06787330316742082,
+      "closeness_centrality": 0.14918414918414918,
+      "vulnerability_score": 0.15,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "active_threshold": {
+      "node_name": "active_threshold",
+      "kind": "net",
+      "bit_width": 32,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 1,
+      "out_degree": 1,
+      "degree_centrality": 0.038461538461538464,
+      "betweenness_centrality": 0.011312217194570135,
+      "closeness_centrality": 0.11171240819482026,
+      "vulnerability_score": 0.18,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "range_anomaly": {
+      "node_name": "range_anomaly",
+      "kind": "net",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 2,
+      "out_degree": 1,
+      "degree_centrality": 0.057692307692307696,
+      "betweenness_centrality": 0.016968325791855206,
+      "closeness_centrality": 0.11897824397824398,
+      "vulnerability_score": 0.12,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "control_fault": {
+      "node_name": "control_fault",
+      "kind": "net",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 1,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 4,
+      "out_degree": 1,
+      "degree_centrality": 0.09615384615384616,
+      "betweenness_centrality": 0.007918552036199095,
+      "closeness_centrality": 0.08653846153846154,
+      "vulnerability_score": 0.1,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "disagreement": {
+      "node_name": "disagreement",
+      "kind": "net",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 2,
+      "in_degree": 3,
+      "out_degree": 3,
+      "degree_centrality": 0.11538461538461539,
+      "betweenness_centrality": 0.038838612368024134,
+      "closeness_centrality": 0.1839622641509434,
+      "vulnerability_score": 0.112,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    },
+    "shadow_accumulator": {
+      "node_name": "shadow_accumulator",
+      "kind": "variable",
+      "bit_width": 32,
+      "is_register": 1,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 1,
+      "pipeline_stage": 3,
+      "in_degree": 2,
+      "out_degree": 1,
+      "degree_centrality": 0.057692307692307696,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.0728744939271255,
+      "vulnerability_score": 0.88,
+      "criticality_tier": "CRITICAL",
+      "recommended_protection": "Selective Local TMR + Shadow Checkpoint"
+    },
+    "u_sva": {
+      "node_name": "u_sva",
+      "kind": "uninstantiateddef",
+      "bit_width": 1,
+      "is_register": 0,
+      "is_control": 0,
+      "is_residue": 0,
+      "is_pipeline_boundary": 0,
+      "pipeline_stage": 3,
+      "in_degree": 0,
+      "out_degree": 0,
+      "degree_centrality": 0.0,
+      "betweenness_centrality": 0.0,
+      "closeness_centrality": 0.0,
+      "vulnerability_score": 0.112,
+      "criticality_tier": "LOW",
+      "recommended_protection": "Standard Baseline Library Cell"
+    }
+  },
+  "edges": [
+    [
+      "clk",
+      "reg_a"
+    ],
+    [
+      "clk",
+      "reg_b"
+    ],
+    [
+      "clk",
+      "reg_c"
+    ],
+    [
+      "clk",
+      "valid_d1"
+    ],
+    [
+      "clk",
+      "valid_d1_n"
+    ],
+    [
+      "clk",
+      "pipe_product"
+    ],
+    [
+      "clk",
+      "pipe_c"
+    ],
+    [
+      "clk",
+      "pipe_ab_mod3"
+    ],
+    [
+      "clk",
+      "pipe_c_mod3"
+    ],
+    [
+      "clk",
+      "out"
+    ],
+    [
+      "clk",
+      "fault_detected"
+    ],
+    [
+      "clk",
+      "rollback"
+    ],
+    [
+      "clk",
+      "shadow_accumulator"
+    ],
+    [
+      "clk",
+      "valid"
+    ],
+    [
+      "rst_n",
+      "reg_a"
+    ],
+    [
+      "rst_n",
+      "reg_b"
+    ],
+    [
+      "rst_n",
+      "reg_c"
+    ],
+    [
+      "a",
+      "reg_a"
+    ],
+    [
+      "b",
+      "reg_b"
+    ],
+    [
+      "c",
+      "reg_c"
+    ],
+    [
+      "start",
+      "valid_d1"
+    ],
+    [
+      "start",
+      "valid_d1_n"
+    ],
+    [
+      "reg_a",
+      "product"
+    ],
+    [
+      "reg_a",
+      "u_enc_a"
+    ],
+    [
+      "reg_b",
+      "product"
+    ],
+    [
+      "reg_b",
+      "u_enc_b"
+    ],
+    [
+      "reg_c",
+      "reg_c_32"
+    ],
+    [
+      "reg_c",
+      "pipe_c"
+    ],
+    [
+      "valid_d1",
+      "valid_d2"
+    ],
+    [
+      "valid_d1",
+      "control_fault"
+    ],
+    [
+      "valid_d1_n",
+      "valid_d2_n"
+    ],
+    [
+      "valid_d1_n",
+      "control_fault"
+    ],
+    [
+      "product",
+      "pipe_product"
+    ],
+    [
+      "mac_result",
+      "mac_result_32"
+    ],
+    [
+      "mac_result",
+      "u_ewma"
+    ],
+    [
+      "mac_result",
+      "range_anomaly"
+    ],
+    [
+      "mac_result",
+      "out"
+    ],
+    [
+      "mac_result",
+      "shadow_accumulator"
+    ],
+    [
+      "a_mod3",
+      "ab_mod3_product"
+    ],
+    [
+      "b_mod3",
+      "ab_mod3_product"
+    ],
+    [
+      "c_mod3",
+      "pipe_c_mod3"
+    ],
+    [
+      "reg_c_32",
+      "u_enc_c"
+    ],
+    [
+      "u_enc_a",
+      "a_mod3"
+    ],
+    [
+      "u_enc_b",
+      "b_mod3"
+    ],
+    [
+      "u_enc_c",
+      "c_mod3"
+    ],
+    [
+      "ab_mod3_product",
+      "pipe_ab_mod3"
+    ],
+    [
+      "pipe_product",
+      "mac_result"
+    ],
+    [
+      "pipe_c",
+      "mac_result"
+    ],
+    [
+      "pipe_ab_mod3",
+      "rns_calc"
+    ],
+    [
+      "pipe_c_mod3",
+      "rns_calc"
+    ],
+    [
+      "valid_d2",
+      "u_ewma"
+    ],
+    [
+      "valid_d2",
+      "control_fault"
+    ],
+    [
+      "valid_d2_n",
+      "control_fault"
+    ],
+    [
+      "out_mod3",
+      "mod3_mismatch"
+    ],
+    [
+      "expected_mod3",
+      "mod3_mismatch"
+    ],
+    [
+      "mac_result_32",
+      "u_enc_out"
+    ],
+    [
+      "u_enc_out",
+      "out_mod3"
+    ],
+    [
+      "rns_calc",
+      "expected_mod3_reg"
+    ],
+    [
+      "expected_mod3_reg",
+      "expected_mod3"
+    ],
+    [
+      "mod3_mismatch",
+      "u_ewma"
+    ],
+    [
+      "mod3_mismatch",
+      "disagreement"
+    ],
+    [
+      "adaptive_threshold",
+      "active_threshold"
+    ],
+    [
+      "u_ewma",
+      "adaptive_threshold"
+    ],
+    [
+      "u_ewma",
+      "ewma_mean"
+    ],
+    [
+      "u_ewma",
+      "ewma_mad"
+    ],
+    [
+      "u_ewma",
+      "ewma_warmup_done"
+    ],
+    [
+      "active_threshold",
+      "range_anomaly"
+    ],
+    [
+      "range_anomaly",
+      "disagreement"
+    ],
+    [
+      "control_fault",
+      "disagreement"
+    ],
+    [
+      "disagreement",
+      "out"
+    ],
+    [
+      "disagreement",
+      "fault_detected"
+    ],
+    [
+      "disagreement",
+      "rollback"
+    ],
+    [
+      "shadow_accumulator",
+      "out"
+    ]
+  ]
+}

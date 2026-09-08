@@ -1,9 +1,9 @@
 # 🛡️ Báo Cáo Tổng Hợp Kiểm Chứng Phần Cứng (Master Verification Report)
 
 > **Dự án**: NCKH SoC RISC-V RV32I Tích Hợp Bộ Tăng Tốc Secure MAC Kháng Lỗi  
-> **Thời gian tạo**: `2026-09-05 23:27:17`  
+> **Thời gian tạo**: `2026-09-08 14:08:33`  
 > **Trạng thái tổng thể**: 🟢 **PASSED (100% SUCCESS)**  
-> **Tổng thời gian thực thi**: `52.68s`  
+> **Tổng thời gian thực thi**: `100.82s`  
 
 ---
 
@@ -11,16 +11,20 @@
 
 | Bước | Bộ Kiểm Thử (Test Suite) | Phương Pháp Kiểm Chứng | Số Ca Kiểm Thử | Trạng Thái | Thời Gian |
 | :---: | :--- | :--- | :---: | :---: | :---: |
-| 1 | **1. PySlang RTL Linter & Elaboration Check** | PySlang AST & Semantic Lint | 21 RTL files | ✅ `PASSED` | `0.22s` |
-| 2 | **2. Cocotb ALU Top Tests & Functional Coverage (30 Cases)** | Cocotb + cocotb-coverage | 30 Corner cases | ✅ `PASSED` | `0.93s` |
-| 3 | **3. Cocotb Hazard Unit Tests & SVA Invariants (13 Cases)** | Cocotb + Hazard SVA | 13 Hazard cases | ✅ `PASSED` | `0.82s` |
-| 4 | **4. Cocotb CPU Core Sub-Units (Branch & Regfile)** | Cocotb Sub-Units | 8 Unit cases | ✅ `PASSED` | `1.64s` |
-| 5 | **5. Cocotb RV32I ISA Compliance Suite (7 Micro-Programs)** | Cocotb RV32I ISA Compliance | 7 Micro-programs | ✅ `PASSED` | `0.92s` |
-| 6 | **6. Cocotb Secure MAC Tests & Modulo-3 Coverage (9 Cases)** | Cocotb + Modulo-3 Coverage | 9 MAC cases | ✅ `PASSED` | `0.89s` |
-| 7 | **7. Cocotb SoC System Integration Tests (4 End-to-End Cases)** | Cocotb SoC Integration | 4 End-to-End cases | ✅ `PASSED` | `0.90s` |
-| 8 | **8. Traditional SystemVerilog Self-Checking Testbenches** | Icarus Verilog Self-Checking TB | 2 SystemVerilog TBs | ✅ `PASSED` | `0.26s` |
-| 9 | **9. Cocotb Fault Injection Campaign (4,400 Trials & Coverage)** | Cocotb Monte Carlo Fault Injection | 4,400 Trials | ✅ `PASSED` | `45.14s` |
-| 10 | **10. Cocotb AI Inference Resilience Benchmark (INT8 FC Layer)** | Cocotb INT8 AI Inference Benchmark | FC Layer Workload | ✅ `PASSED` | `0.96s` |
+| 1 | **1. PySlang RTL Linter & Elaboration Check** | PySlang AST & Semantic Lint | 26 RTL files | ✅ `PASSED` | `0.25s` |
+| 2 | **2. Cocotb ALU Top Tests & Functional Coverage (30 Cases)** | Cocotb + cocotb-coverage | 30 Corner cases | ✅ `PASSED` | `1.18s` |
+| 3 | **3. Cocotb Hazard Unit Tests & SVA Invariants (13 Cases)** | Cocotb + Hazard SVA | 13 Hazard cases | ✅ `PASSED` | `1.20s` |
+| 4 | **4. Cocotb CPU Core Sub-Units (Branch & Regfile)** | Cocotb Sub-Units | 8 Unit cases | ✅ `PASSED` | `1.85s` |
+| 5 | **5. Cocotb RV32I ISA Compliance Suite (7 Micro-Programs)** | Cocotb RV32I ISA Compliance | 7 Micro-programs | ✅ `PASSED` | `1.27s` |
+| 6 | **6. Cocotb Secure MAC Tests & Modulo-3 Coverage (10 Cases)** | Cocotb + Modulo-3 Coverage | 10 MAC cases | ✅ `PASSED` | `1.16s` |
+| 7 | **7. Cocotb SoC System Integration Tests (4 End-to-End Cases)** | Cocotb SoC Integration | 4 End-to-End cases | ✅ `PASSED` | `1.23s` |
+| 8 | **8. Traditional SystemVerilog Self-Checking Testbenches** | Icarus Verilog Self-Checking TB | 2 SystemVerilog TBs | ✅ `PASSED` | `0.24s` |
+| 9 | **9. Cocotb Fault Injection Campaign (4,400 Trials & Coverage)** | Cocotb Monte Carlo Fault Injection | 4,400 Trials | ✅ `PASSED` | `34.32s` |
+| 10 | **10. Cocotb AI Inference Resilience Benchmark (INT8 FC Layer)** | Cocotb INT8 AI Inference Benchmark | FC Layer Workload | ✅ `PASSED` | `1.15s` |
+| 11 | **11. Cocotb Secure MAC AXI4-Lite IP Suite (6 Cases)** | Cocotb AXI4-Lite Protocol & Registers | 6 AXI IP cases | ✅ `PASSED` | `1.35s` |
+| 12 | **12. Cocotb AXI4-Lite Crossbar Interconnect Suite (3 Cases)** | Cocotb AXI Crossbar Interconnect | 3 Routing/DECERR cases | ✅ `PASSED` | `1.35s` |
+| 13 | **13. Cocotb Full AXI-Lite SoC Integration Suite (4 Cases)** | Cocotb Full AXI SoC Integration | 4 End-to-End AXI cases | ✅ `PASSED` | `1.36s` |
+| 14 | **14. Cocotb Digits MLP AXI Resilience Benchmark (2 Cases)** | Cocotb Digits MLP AXI Resilience Benchmark | 100 AI Samples | ✅ `PASSED` | `52.94s` |
 
 ---
 

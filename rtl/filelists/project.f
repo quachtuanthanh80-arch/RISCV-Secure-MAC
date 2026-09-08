@@ -21,9 +21,20 @@
 
 // --- 2. MAC Accelerators ---
 ../../rtl/mac/baseline_mac.v
+../../rtl/mac/dmr_mac.v
+../../rtl/mac/tmr_mac.v
+../../rtl/mac/approx_mac.v
+../../rtl/mac/reso_mac.v
 ../../rtl/mac/secure_mac_sva.sv
 ../../rtl/mac/secure_mac.v
 
 // --- 3. Top System & Wrapper Modules ---
 ../../rtl/top/top_module.v
 ../../rtl/top/alu_top.sv
+
+// --- 4. AXI4-Lite Protocol Infrastructure ---
+../../rtl/bus/cpu_to_axi_master.v
+../../rtl/bus/axi_interconnect_1m2s.v
+../../rtl/cpu/dmem_axi.v
+../../rtl/mac/secure_mac_axi.v
+../../rtl/top/top_module_axi.v

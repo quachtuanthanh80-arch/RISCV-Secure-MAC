@@ -198,56 +198,82 @@ def plot_fig3_fault_breakdown(figures_dir):
 
 def plot_fig4_multibit_scaling(figures_dir):
     """
-    Figure 4: Multi-Bit Burst Error Scaling (Clean Single Plot).
-    Shows Empirical FDR, Empirical SDC, and Theoretical Asymptote 2/3 (66.67%).
-    All text labels are precisely aligned directly above/below their respective curve points.
+    Figure 4 (Hình 3.5): Comprehensive Multi-Level Fault Resilience:
+    - Panel (a): Hardware-Level Multi-Bit Burst Error Scaling (k = 1..6 bits).
+    - Panel (b): Task-Level AI/ML Inference Accuracy Resilience (Optical Digits MLP 64->16->10 under active SEU).
     """
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14.2, 5.0), dpi=300, gridspec_kw={'width_ratios': [1.08, 1.28]})
+
+    # =========================================================================
+    # Panel (a): Multi-Bit Burst Hardware Scaling (k = 1..6)
+    # =========================================================================
     k_values = [1, 2, 3, 4, 5, 6]
     fdr_empirical = [100.0, 77.40, 91.80, 92.20, 97.00, 97.80]
     sdc_empirical = [0.0, 22.60, 8.20, 7.80, 3.00, 2.20]
 
-    fig, ax = plt.subplots(figsize=(8.8, 4.4), dpi=300)
+    line1, = ax1.plot(k_values, fdr_empirical, marker="o", markersize=6.8, linewidth=2.2, color="#1565c0",
+                      label="Phát hiện lỗi FDR", zorder=4)
+    line2, = ax1.plot(k_values, sdc_empirical, marker="s", markersize=6.2, linewidth=2.0, color="#c62828",
+                      linestyle="-", label="Lọt lỗi SDC", zorder=4)
+    line3 = ax1.axhline(66.67, color="#2e7d32", linestyle="--", linewidth=1.6,
+                        label="Ngưỡng lý thuyết (2/3 ≈ 66.7%)", zorder=3)
 
-    # 1. Main Empirical Curves
-    line1, = ax.plot(k_values, fdr_empirical, marker="o", markersize=7.5, linewidth=2.4, color="#1565c0",
-                     label="Empirical Fault Detection Rate (FDR)", zorder=4)
-    line2, = ax.plot(k_values, sdc_empirical, marker="s", markersize=7.0, linewidth=2.2, color="#c62828",
-                     linestyle="-", label="Empirical Silent Data Corruption (SDC)", zorder=4)
-
-    # 2. Theoretical Asymptote
-    line3 = ax.axhline(66.67, color="#2e7d32", linestyle="--", linewidth=1.8,
-                       label="Theoretical Asymptotic Limit ($2/3 \\approx 66.67\\%$)", zorder=3)
-
-    # 3. Direct Point Annotations with explicit offsets to avoid overlaps
     for k, val in zip(k_values, fdr_empirical):
-        y_offset = 4.0 if val < 95.0 else 3.0
-        ax.text(k, val + y_offset, f"{val:.1f}%", ha="center", va="bottom",
-                fontsize=8.8, fontweight="bold", color="#0d47a1")
+        y_off = 3.5 if val < 95.0 else 3.0
+        ax1.text(k, val + y_off, f"{val:.1f}%", ha="center", va="bottom", fontsize=8.2, fontweight="bold", color="#0d47a1")
 
     for k, val in zip(k_values, sdc_empirical):
-        y_offset = -4.5 if val > 5.0 else -4.0
-        ax.text(k, val + y_offset, f"{val:.1f}%", ha="center", va="top",
-                fontsize=8.8, fontweight="bold", color="#b71c1c")
+        y_off = -4.0 if val > 5.0 else -3.5
+        ax1.text(k, val + y_off, f"{val:.1f}%", ha="center", va="top", fontsize=8.2, fontweight="bold", color="#b71c1c")
 
-    ax.text(5.65, 69.2, "2/3 ≈ 66.7%", ha="center", va="bottom",
-            fontsize=8.8, fontweight="bold", color="#1b5e20")
+    ax1.text(5.65, 69.0, "2/3 ≈ 66.7%", ha="center", va="bottom", fontsize=8.2, fontweight="bold", color="#1b5e20")
+    ax1.set_xlabel("Kích thước cụm lỗi đa bit ($k$ bit)", fontsize=10.5, fontweight="bold", labelpad=6)
+    ax1.set_ylabel("Tỷ lệ (%)", fontsize=10.5, fontweight="bold", labelpad=6)
+    ax1.set_title("(a) Tỷ lệ Phát hiện Lỗi Chùm Đa Bit Phần Cứng\n(Hardware Multi-Bit Burst Scaling $k=1..6$)", fontsize=11.0, fontweight="bold", pad=10)
+    ax1.set_xlim(0.6, 6.4)
+    ax1.set_ylim(-8.0, 115.0)
+    ax1.set_xticks(k_values)
+    ax1.set_xticklabels([f"k = {k}" for k in k_values])
+    ax1.grid(True, linestyle="--", alpha=0.35, zorder=1)
+    ax1.legend(loc="center right", framealpha=0.95, edgecolor="#90a4ae", fontsize=8.5)
 
-    # 4. Axis formatting and styling
-    ax.set_xlabel("Multi-Bit Burst Error Size ($k$ = Number of Concurrently Injected Bit-Flips)", fontsize=11, fontweight="bold", labelpad=8)
-    ax.set_ylabel("Probability / Rate (%)", fontsize=11, fontweight="bold", labelpad=8)
-    ax.set_xlim(0.6, 6.4)
-    ax.set_ylim(-8.0, 115.0)
-    ax.set_xticks(k_values)
-    ax.set_xticklabels([f"k = {k}" for k in k_values])
+    # =========================================================================
+    # Panel (b): Task-Level ML Resilience Benchmark (Optical Digits MLP)
+    # =========================================================================
+    categories = ["Top-1 Accuracy\n(Độ chính xác nhận diện)", "Silent Data Corruption\n(Tỷ lệ sai lệch nhãn SDC)"]
+    x = np.arange(len(categories))
+    width = 0.26
 
-    for tick_label in ax.get_xticklabels():
-        if tick_label.get_text() == "k = 1":
-            tick_label.set_color("#1b5e20")
-            tick_label.set_fontweight("bold")
-            tick_label.set_fontsize(10.5)
+    clean_vals = [96.11, 0.0]
+    base_fault_vals = [28.00, 72.00]
+    secure_fault_vals = [96.11, 0.0]
 
-    ax.grid(True, linestyle="--", alpha=0.35, zorder=1)
-    ax.legend(loc="center right", framealpha=0.96, edgecolor="#90a4ae", fontsize=9.5, fancybox=True)
+    rects1 = ax2.bar(x - width, clean_vals, width, label="Mô hình chuẩn (Clean Baseline)", color="#2e7d32", alpha=0.90, edgecolor="#1b5e20")
+    rects2 = ax2.bar(x, base_fault_vals, width, label="MAC Không bảo vệ (Active SEU)", color="#d32f2f", alpha=0.90, edgecolor="#b71c1c")
+    rects3 = ax2.bar(x + width, secure_fault_vals, width, label="Secure MAC Đề xuất (Active SEU)", color="#1565c0", alpha=0.90, edgecolor="#0d47a1")
+
+    ax2.set_ylabel("Tỷ lệ Phần trăm (%)", fontsize=10.5, fontweight="bold", labelpad=6)
+    ax2.set_title("(b) Độ Bền Vững Cấp Nhiệm Vụ Suy Luận AI (Digits MLP 64→16→10)\n(Task-Level Machine Learning Resilience under SEU)", fontsize=11.0, fontweight="bold", pad=10)
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(categories, fontsize=10.0, fontweight="bold")
+    ax2.set_ylim(0, 120)
+    ax2.legend(loc="upper right", framealpha=0.95, edgecolor="#90a4ae", fontsize=8.8)
+    ax2.grid(True, linestyle="--", alpha=0.35, zorder=1)
+
+    for rect in rects1:
+        h = rect.get_height()
+        if h > 0:
+            ax2.text(rect.get_x() + rect.get_width()/2.0, h + 2.5, f"{h:.1f}%", ha="center", va="bottom", fontsize=8.5, fontweight="bold", color="#1b5e20")
+
+    for rect in rects2:
+        h = rect.get_height()
+        if h > 0:
+            ax2.text(rect.get_x() + rect.get_width()/2.0, h + 2.5, f"{h:.1f}%", ha="center", va="bottom", fontsize=8.5, fontweight="bold", color="#b71c1c")
+
+    for rect in rects3:
+        h = rect.get_height()
+        if h > 0:
+            ax2.text(rect.get_x() + rect.get_width()/2.0, h + 2.5, f"{h:.1f}%", ha="center", va="bottom", fontsize=8.5, fontweight="bold", color="#0d47a1")
 
     fig.tight_layout()
     out_file = figures_dir / "fig3_5_multibit_burst_scaling.png"
@@ -256,18 +282,21 @@ def plot_fig4_multibit_scaling(figures_dir):
     print(f"[OK] Generated: {out_file.resolve()}")
 
 
+
 def plot_fig5_fpga_ppa(figures_dir):
     """
     Figure 5: Comprehensive Post-Implementation FPGA PPA Summary (Zynq-7000 xc7z020).
-    Uses a 2x2 Grid Layout with updated exact metrics from Vivado 2026.1 synthesis and route reports.
+    Uses a 2x2 Grid Layout with exact metrics from Vivado 2026.1 post-route reports:
+    - SoC Top: 860 LUTs, 1074 FFs, WNS = +1.289 ns, WHS = +0.028 ns @ 100 MHz, Fmax = 114.80 MHz, Dyn = 19 mW, Stat = 103 mW
+    - Secure MAC: 240 LUTs (standalone), 138 FFs, WNS = +1.658 ns @ 100 MHz, Fmax = 119.87 MHz, Dyn = 14 mW, Stat = 103 mW
     """
     fig, ((ax1, ax2), (ax3, ax4)) = plt.subplots(2, 2, figsize=(13.0, 9.2), dpi=300)
     width = 0.32
 
     # (a) Hardware Resource Utilization
     designs = ["SoC Top\n(RV32I+MAC)", "Secure MAC\n(3-Stage CED)"]
-    luts = [860, 360]
-    ffs = [1074, 150]
+    luts = [860, 240]
+    ffs = [1074, 138]
     x = np.arange(len(designs))
 
     rects_l = ax1.bar(x - width/2, luts, width, label="Slice LUTs", color="#1976d2", alpha=0.90, edgecolor="#0d47a1")
@@ -285,56 +314,56 @@ def plot_fig5_fpga_ppa(figures_dir):
         h = rect.get_height()
         ax1.text(rect.get_x() + rect.get_width()/2.0, h + 25, f"{int(h)}", ha="center", va="bottom", fontsize=9.2, fontweight="bold", color="#1b5e20")
 
-    # (b) STA Timing Slack Breakdown (Setup & Hold)
-    modules_t = ["SoC Top (25 MHz)", "Secure MAC (25 MHz)"]
-    setup_slack = [28.981, 33.725]  # WNS
-    hold_slack = [0.038, 0.052]     # WHS
+    # (b) STA Timing Slack Breakdown (Setup & Hold @ 100 MHz)
+    modules_t = ["SoC Top (100 MHz)", "Secure MAC (100 MHz)"]
+    setup_slack = [1.289, 1.658]   # WNS
+    hold_slack = [0.028, 0.045]    # WHS
     x_t = np.arange(len(modules_t))
 
     rects_s = ax2.bar(x_t - width/2, setup_slack, width, label="Setup Slack (WNS)", color="#0288d1", alpha=0.90, edgecolor="#01579b")
     rects_h = ax2.bar(x_t + width/2, hold_slack, width, label="Hold Slack (WHS)", color="#7b1fa2", alpha=0.90, edgecolor="#4a148c")
     ax2.set_ylabel("Thời gian Dư dả Slack (ns)", fontsize=11, fontweight="bold")
-    ax2.set_title("(b) Đánh giá Thời gian STA (Target Period = 40.0 ns)", fontsize=11.5, fontweight="bold", pad=10)
+    ax2.set_title("(b) Đánh giá Thời gian STA (Target Period = 10.0 ns / 100 MHz)", fontsize=11.5, fontweight="bold", pad=10)
     ax2.set_xticks(x_t)
     ax2.set_xticklabels(modules_t, fontsize=10.0, fontweight="bold")
-    ax2.set_ylim(0, 42)
+    ax2.set_ylim(0, 2.5)
     ax2.legend(loc="upper left", fontsize=9.5)
     for rect in rects_s:
         h = rect.get_height()
-        ax2.text(rect.get_x() + rect.get_width()/2.0, h + 0.8, f"+{h:.2f} ns", ha="center", va="bottom", fontsize=9.0, fontweight="bold", color="#01579b")
+        ax2.text(rect.get_x() + rect.get_width()/2.0, h + 0.06, f"+{h:.3f} ns", ha="center", va="bottom", fontsize=9.0, fontweight="bold", color="#01579b")
     for rect in rects_h:
         h = rect.get_height()
-        ax2.text(rect.get_x() + rect.get_width()/2.0, h + 0.8, f"+{h:.3f} ns", ha="center", va="bottom", fontsize=9.0, fontweight="bold", color="#4a148c")
+        ax2.text(rect.get_x() + rect.get_width()/2.0, h + 0.06, f"+{h:.3f} ns", ha="center", va="bottom", fontsize=9.0, fontweight="bold", color="#4a148c")
 
-    # (c) Maximum Frequency (Fmax) & Period
-    fmax_vals = [90.75, 159.36]
+    # (c) Maximum Frequency (Fmax)
+    fmax_vals = [114.80, 119.87]
     bars_f = ax3.bar(x, fmax_vals, width=0.42, color=["#f57c00", "#388e3c"], alpha=0.88, edgecolor=["#e65100", "#1b5e20"])
     ax3.set_ylabel("Tần số Hoạt động Tối đa Fmax (MHz)", fontsize=11, fontweight="bold")
     ax3.set_title("(c) Tần số Hoạt động Cực đại Fmax (Fmax = 1 / (T_req - WNS))", fontsize=11.5, fontweight="bold", pad=10)
     ax3.set_xticks(x)
     ax3.set_xticklabels(designs, fontsize=10.0, fontweight="bold")
-    ax3.set_ylim(0, 195)
+    ax3.set_ylim(0, 150)
     for bar in bars_f:
         h = bar.get_height()
-        ax3.text(bar.get_x() + bar.get_width()/2.0, h + 4.5, f"{h:.2f} MHz", ha="center", va="bottom", fontsize=9.5, fontweight="bold")
+        ax3.text(bar.get_x() + bar.get_width()/2.0, h + 3.0, f"{h:.2f} MHz", ha="center", va="bottom", fontsize=9.5, fontweight="bold")
 
     # (d) Dynamic & Static Power Dissipation
-    dyn_power = [82.0, 10.0]
-    stat_power = [148.0, 117.0]
+    dyn_power = [19.0, 14.0]
+    stat_power = [103.0, 103.0]
     rects_p1 = ax4.bar(x - width/2, dyn_power, width, label="Công suất Động (Dynamic)", color="#ef6c00", alpha=0.90, edgecolor="#e65100")
     rects_p2 = ax4.bar(x + width/2, stat_power, width, label="Công suất Tĩnh (Device Static)", color="#6a1b9a", alpha=0.90, edgecolor="#4a148c")
     ax4.set_ylabel("Công suất Tiêu tán (mW)", fontsize=11, fontweight="bold")
-    ax4.set_title("(d) Tiêu thụ Năng lượng (Vivado Power Analysis)", fontsize=11.5, fontweight="bold", pad=10)
+    ax4.set_title("(d) Tiêu thụ Năng lượng (Vivado Power Analysis, Tổng = 122 mW)", fontsize=11.5, fontweight="bold", pad=10)
     ax4.set_xticks(x)
     ax4.set_xticklabels(designs, fontsize=10.0, fontweight="bold")
-    ax4.set_ylim(0, 195)
+    ax4.set_ylim(0, 135)
     ax4.legend(loc="upper right", fontsize=9.5)
     for rect in rects_p1:
         h = rect.get_height()
-        ax4.text(rect.get_x() + rect.get_width()/2.0, h + 3.5, f"{int(h)} mW", ha="center", va="bottom", fontsize=9.2, fontweight="bold", color="#e65100")
+        ax4.text(rect.get_x() + rect.get_width()/2.0, h + 2.5, f"{int(h)} mW", ha="center", va="bottom", fontsize=9.2, fontweight="bold", color="#e65100")
     for rect in rects_p2:
         h = rect.get_height()
-        ax4.text(rect.get_x() + rect.get_width()/2.0, h + 3.5, f"{int(h)} mW", ha="center", va="bottom", fontsize=9.2, fontweight="bold", color="#4a148c")
+        ax4.text(rect.get_x() + rect.get_width()/2.0, h + 2.5, f"{int(h)} mW", ha="center", va="bottom", fontsize=9.2, fontweight="bold", color="#4a148c")
 
     # Ample spacing between subplots to eliminate any overlapping
     fig.subplots_adjust(left=0.08, right=0.96, bottom=0.08, top=0.94, wspace=0.28, hspace=0.36)
@@ -343,6 +372,7 @@ def plot_fig5_fpga_ppa(figures_dir):
     fig.savefig(out_file, dpi=300, bbox_inches="tight")
     plt.close(fig)
     print(f"[OK] Generated: {out_file.resolve()}")
+
 
 
 def main():

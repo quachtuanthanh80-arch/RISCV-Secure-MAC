@@ -129,11 +129,12 @@ module top_module (
     // Data Memory (RAM) for general variables and weights
     wire [31:0] dmem_rdata;
     dmem u_dmem (
-        .clk (clk),
-        .we  (mem_write & mem_valid & (~mem_addr[31])),
-        .a   (mem_addr),
-        .wd  (mem_wdata),
-        .rd  (dmem_rdata)
+        .clk   (clk),
+        .we    (mem_write & mem_valid & (~mem_addr[31])),
+        .wstrb (4'b1111),
+        .a     (mem_addr),
+        .wd    (mem_wdata),
+        .rd    (dmem_rdata)
     );
 
     // Sticky MAC status flags for software polling

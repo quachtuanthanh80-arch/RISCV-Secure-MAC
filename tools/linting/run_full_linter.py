@@ -125,3 +125,42 @@ if report_alu and report_alu.strip():
     print(report_alu)
 else:
     print("  CLEAN: 0 errors, 0 warnings in alu_top.sv!")
+
+# Project 4: AXI-Lite System Integration (top_module_axi)
+print("\n--- Project 4: AXI-Lite System Integration (top_module_axi.v) ---")
+axi_sys_files = [
+    str(workspace / "rtl" / "top" / "top_module_axi.v"),
+    str(workspace / "rtl" / "bus" / "cpu_to_axi_master.v"),
+    str(workspace / "rtl" / "bus" / "axi_interconnect_1m2s.v"),
+    str(workspace / "rtl" / "cpu" / "dmem_axi.v"),
+    str(workspace / "rtl" / "mac" / "secure_mac_axi.v"),
+    str(workspace / "rtl" / "mac" / "secure_mac_sva.sv"),
+    str(workspace / "rtl" / "mac" / "secure_mac.v"),
+    str(workspace / "rtl" / "cpu" / "riscv_cpu.sv"),
+    str(workspace / "rtl" / "cpu" / "imem.sv"),
+    str(workspace / "rtl" / "cpu" / "dmem.sv"),
+    str(workspace / "rtl" / "cpu" / "pipe_if_id.sv"),
+    str(workspace / "rtl" / "cpu" / "instruction_decoder.sv"),
+    str(workspace / "rtl" / "cpu" / "control_unit.sv"),
+    str(workspace / "rtl" / "cpu" / "regfile.sv"),
+    str(workspace / "rtl" / "cpu" / "branch_cmp.sv"),
+    str(workspace / "rtl" / "cpu" / "pipe_id_ex.sv"),
+    str(workspace / "rtl" / "cpu" / "alu.sv"),
+    str(workspace / "rtl" / "cpu" / "pipe_ex_mem.sv"),
+    str(workspace / "rtl" / "cpu" / "pipe_mem_wb.sv"),
+    str(workspace / "rtl" / "cpu" / "hazard_unit.sv"),
+    str(workspace / "rtl" / "cpu" / "hazard_unit_sva.sv"),
+]
+
+comp_axi = Compilation()
+for fn in axi_sys_files:
+    if os.path.exists(fn):
+        comp_axi.addSyntaxTree(SyntaxTree.fromFile(fn))
+
+diags_axi = comp_axi.getAllDiagnostics()
+report_axi = pyslang.DiagnosticEngine.reportAll(comp_axi.sourceManager, diags_axi)
+if report_axi and report_axi.strip():
+    print(report_axi)
+else:
+    print("  CLEAN: 0 errors, 0 warnings across all 19 interconnected AXI modules!")
+

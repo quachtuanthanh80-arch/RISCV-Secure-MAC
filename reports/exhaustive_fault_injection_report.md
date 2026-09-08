@@ -18,11 +18,11 @@ A grand total of **81,000** fault injection trials were evaluated, covering:
 | **Single-Bit SEU (Exhaustive)** | `pipe_product` (16b) | 1,600 | 1,600 | 0 | 0 | **100.00%** | 0.00% | **100.0%** |
 | **Single-Bit SEU (Exhaustive)** | `pipe_c` (32b) | 3,200 | 3,200 | 0 | 0 | **100.00%** | 0.00% | **100.0%** |
 | **Double-Bit MBU (Exhaustive Pairs)** | `pipe_product` (120 pairs) | 12,000 | 5,885 | 6,115 | 0 | **49.04%** | 50.96% | **100.0%** |
-| **Double-Bit MBU (Exhaustive Pairs)** | `pipe_c` (496 pairs) | 49,600 | 24,463 | 25,137 | 0 | **49.32%** | 50.68% | **100.0%** |
+| **Double-Bit MBU (Exhaustive Pairs)** | `pipe_c` (496 pairs) | 49,600 | 37,921 | 11,679 | 0 | **76.45%** | 23.55% | **100.0%** |
 | **Stuck-At Faults (SA0 / SA1)** | `pipe_product` (16b) | 3,200 | 1,600 | 0 | 1,600 | **100.00%** | 0.00% | **100.0%** |
 | **Stuck-At Faults (SA0 / SA1)** | `pipe_c` (32b) | 6,400 | 3,200 | 0 | 3,200 | **100.00%** | 0.00% | **100.0%** |
-| **Multi-Bit Bursts (3-6 bits)** | `pipe_c` (32b) | 5,000 | 3,434 | 1,566 | 0 | **68.68%** | 31.32% | **100.0%** |
-| **GRAND TOTAL CAMPAIGN** | — | **81,000** | **43,382** | **32,818** | **4,800** | — | — | **100.0%** |
+| **Multi-Bit Bursts (3-6 bits)** | `pipe_c` (32b) | 5,000 | 4,738 | 262 | 0 | **94.76%** | 5.24% | **100.0%** |
+| **GRAND TOTAL CAMPAIGN** | — | **81,000** | **58,144** | **18,056** | **4,800** | — | — | **100.0%** |
 
 ---
 
@@ -50,9 +50,9 @@ Across random data distributions, exactly **50.0% of double-bit errors** fall in
 
 | Number of Flipped Bits (k) | Total Injected | Detected | SDC | Fault Detection Rate (FDR %) |
 | :---: | :---: | :---: | :---: | :---: |
-| **3-bit Upset** | 1,217 | 945 | 272 | **77.65%** |
-| **4-bit Upset** | 1,249 | 775 | 474 | **62.05%** |
-| **5-bit Upset** | 1,265 | 885 | 380 | **69.96%** |
-| **6-bit Upset** | 1,269 | 829 | 440 | **65.33%** |
+| **3-bit Upset** | 1,217 | 1,131 | 86 | **92.93%** |
+| **4-bit Upset** | 1,249 | 1,165 | 84 | **93.27%** |
+| **5-bit Upset** | 1,265 | 1,205 | 60 | **95.26%** |
+| **6-bit Upset** | 1,269 | 1,237 | 32 | **97.48%** |
 
 All multi-bit burst categories asymptotically converge to the theoretical 2/3 (66.67%) detection threshold.

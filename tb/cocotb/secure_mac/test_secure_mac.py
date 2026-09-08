@@ -337,3 +337,59 @@ async def test_mac_pipelined_streaming(dut):
 async def test_mac_functional_coverage(dut):
     """Print out functional coverage metrics."""
     print_coverage_report()
+
+
+# ============================================================
+# TEST 10: Control Path Dual-Rail SEU Fault Injection
+# ============================================================
+@cocotb.test()
+async def test_mac_control_path_seu_injection(dut):
+    """
+    Test 10: Inject transient SEU bit-flip into control pipeline registers
+    (valid_d1_n / valid_d2_n) and verify Dual-Rail parity detects 100% of faults.
+    """
+    cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())
+    await reset_dut(dut)
+
+    # 1. Normal computation to establish known golden shadow state
+    out_valid, f_valid, r_valid = await execute_mac(dut, 10, 10, 0)
+    assert out_valid == 100 and f_valid == 0, f"Normal step failed: {out_valid}"
+
+    # 2. Start a new operation: A=5, B=5, C=100
+    await FallingEdge(dut.clk)
+    dut.a.value = to_unsigned(5, 8)
+    dut.b.value = to_unsigned(5, 8)
+    dut.c.value = to_unsigned(100, 32)
+    dut.start.value = 1
+    await FallingEdge(dut.clk)
+    dut.start.value = 0
+
+    # 3. Wait until valid_d1 becomes 1
+    while int(dut.valid_d1.value) == 0:
+        await RisingEdge(dut.clk)
+
+    # Corrupt the dual-rail complementary register valid_d1_n
+    # Under normal operation: valid_d1 = 1, valid_d1_n = 0
+    # Inject SEU: valid_d1_n = 1 (creates parity violation valid_d1 == valid_d1_n)
+    await Timer(1, unit="ns")
+    dut.valid_d1_n.value = int(dut.valid_d1.value)
+    await Timer(1, unit="ns")
+    dut._log.info(f"[CONTROL SEU] Injected parity fault: valid_d1={dut.valid_d1.value}, valid_d1_n={dut.valid_d1_n.value}, control_fault={dut.control_fault.value}")
+    assert int(dut.control_fault.value) == 1, "Expected control_fault asserted combinationally by Dual-Rail parity checker!"
+
+    # Step clock and observe sequential fault detection and rollback
+    await RisingEdge(dut.clk)
+    await Timer(1, unit="ns")
+
+    dut._log.info(
+        f"[CONTROL FAULT EVAL] fault_detected={dut.fault_detected.value} "
+        f"rollback={dut.rollback.value} "
+        f"out={dut.out.value}"
+    )
+
+    assert int(dut.fault_detected.value) == 1, "Expected fault_detected asserted on control path SEU!"
+    assert int(dut.rollback.value) == 1, "Expected rollback asserted on control path SEU!"
+    assert int(dut.out.value) == 100, f"Expected rollback to shadow accumulator 100, got {int(dut.out.value)}"
+
+    dut._log.info("PASS: Control Path Dual-Rail Hardening successfully detected and mitigated SEU!")
+

@@ -45,6 +45,7 @@ def run_riscv_isa_tests():
         root_dir / "rtl" / "cpu" / "regfile.sv",
         root_dir / "rtl" / "cpu" / "riscv_cpu.sv",
         root_dir / "rtl" / "mac" / "secure_mac_sva.sv",
+        root_dir / "rtl" / "mac" / "ewma_tracker.sv",
         root_dir / "rtl" / "mac" / "secure_mac.v",
         root_dir / "rtl" / "top" / "top_module.v",
     ]

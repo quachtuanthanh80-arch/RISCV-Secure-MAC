@@ -1,46 +1,80 @@
 `timescale 1ns/1ps
-// Secure_MAC – Khối MAC 8-bit × 8-bit + 32-bit có khả năng kháng tấn công tiêm lỗi
-// Kiến trúc: Luồng dữ liệu cơ sở + Mã thặng dư số học (Modulo 3)
+
+package mod3_pkg;
+    // Hàm cộng modulo 3 giữa 2 số dư 2-bit (1 tầng LUT4)
+    function automatic logic [1:0] mod3_add(input logic [1:0] x, input logic [1:0] y);
+        logic [2:0] s;
+        s = x + y;
+        case (s)
+            3'd0, 3'd3: return 2'd0;
+            3'd1, 3'd4: return 2'd1;
+            3'd2:       return 2'd2;
+            default:    return 2'd0;
+        endcase
+    endfunction
+
+    // Chuyển cặp bit [1:0] thông thường thành số dư mod 3 (2*b1 + b0 mod 3)
+    function automatic logic [1:0] slice_mod3(input logic [1:0] pair);
+        case (pair)
+            2'b00, 2'b11: return 2'd0;
+            2'b01:        return 2'd1;
+            2'b10:        return 2'd2;
+            default:      return 2'd0;
+        endcase
+    endfunction
+
+    // Chuyển cặp bit MSB có dấu: -2^(2k-1)*b1 + 2^(2k-2)*b0 = 1*b1 + 1*b0 (mod 3)
+    function automatic logic [1:0] msb_pair_mod3(input logic [1:0] pair);
+        case (pair)
+            2'b00:   return 2'd0;
+            2'b01:   return 2'd1;
+            2'b10:   return 2'd1;
+            2'b11:   return 2'd2;
+            default: return 2'd0;
+        endcase
+    endfunction
+endpackage
+
+import mod3_pkg::*;
+
 module secure_mac #(
-    parameter IN_WIDTH  = 8,
-    parameter OUT_WIDTH = 32,
+    parameter int IN_WIDTH  = 8,
+    parameter int OUT_WIDTH = 32,
     // Ngưỡng phát hiện dị thường động (Calibrated Dynamic Range Checking):
-    // Với ngõ vào INT8 ([-128, +127]), tích đơn cực đại là (-128)*(-128) = 16,384.
-    // Đối với một lớp mạng nơ-ron với K = 200 tích lũy, miền tích lũy vật lý hợp lệ
-    // là [-3,276,800, +3,276,800]. Lỗi lật bit ở các bit MSB đẩy kết quả vượt quá ngưỡng này
-    // sẽ được kích hoạt bẫy dị thường để Rollback tức thời.
-    parameter signed [OUT_WIDTH-1:0] ANOMALY_THRESHOLD = (OUT_WIDTH >= 32) ? 32'sd3276700 : {1'b0, {(OUT_WIDTH-2){1'b1}}, 1'b0},
-    parameter USE_ADAPTIVE_THRESHOLD = 0
+    parameter signed [OUT_WIDTH-1:0] ANOMALY_THRESHOLD = (OUT_WIDTH >= 32) ? 32'sd3276700 : 16'sd30000,
+    parameter signed [OUT_WIDTH-1:0] HYSTERESIS_BAND   = (OUT_WIDTH >= 32) ? 32'sd100 : 16'sd20,
+    parameter int USE_ADAPTIVE_THRESHOLD = 0
 )(
-    input  wire                 clk,
-    input  wire                 rst_n,
-    input  wire signed [IN_WIDTH-1:0]  a,
-    input  wire signed [IN_WIDTH-1:0]  b,
-    input  wire signed [OUT_WIDTH-1:0] c,
-    input  wire                 start,
-    output reg signed  [OUT_WIDTH-1:0] out,
-    output reg                  fault_detected,
-    output reg                  valid,
-    output reg                  rollback
+    input  logic                                clk,
+    input  logic                                rst_n,
+    input  logic                                test_mode,       // IEC 61508 DFT scan test mode input
+    input  logic signed [IN_WIDTH-1:0]          a,
+    input  logic signed [IN_WIDTH-1:0]          b,
+    input  logic signed [OUT_WIDTH-1:0]         c,
+    input  logic                                start,
+    input  logic                                context_reset,   // ML EWMA dynamic layer recalibration pulse
+    input  logic                                alpha_sel,       // 0: fast adaptation, 1: steady-state
+    output logic signed [OUT_WIDTH-1:0]         out,
+    output logic                                fault_detected,
+    output logic                                valid,
+    output logic                                rollback
 );
 
-    // Luồng dữ liệu chính (8x8 -> 16, + 32 -> 32)
-
-    reg signed [IN_WIDTH-1:0]  reg_a, reg_b;
-    reg signed [OUT_WIDTH-1:0] reg_c;
-    reg valid_d1;
-    reg valid_d1_n; // Dual-rail complementary control register for ISO 26262 ASIL D hardening
+    // Stage 1: Thanh ghi ngõ vào & Dual-rail control
+    logic signed [IN_WIDTH-1:0]  reg_a, reg_b;
+    logic signed [OUT_WIDTH-1:0] reg_c;
+    logic                        valid_d1;
+    logic                        valid_d1_n; // Dual-rail complementary control register for ISO 26262 ASIL D
 
     wire signed [2*IN_WIDTH-1:0] product;
-    wire signed [OUT_WIDTH-1:0]  mac_result;
 
-    always @(posedge clk or negedge rst_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            reg_a      <= 0;
-            reg_b      <= 0;
-            reg_c      <= 0;
-            valid_d1   <= 0;
-            valid_d1_n <= 1;
+            reg_a      <= '0;
+            reg_b      <= '0;
+            reg_c      <= '0;
+            valid_d1   <= 1'b0;
+            valid_d1_n <= 1'b1;
         end else begin
             valid_d1   <= start;
             valid_d1_n <= ~start;
@@ -52,15 +86,12 @@ module secure_mac #(
         end
     end
 
-    // TẦNG PIPELINE 1.5: Khối tổ hợp 1
-    
     assign product = reg_a * reg_b;
 
     wire [1:0] a_mod3;
     wire [1:0] b_mod3;
     wire [1:0] c_mod3;
 
-    // Mở rộng dấu (sign-extension) chuẩn xác khi OUT_WIDTH < 32 để bảo toàn số dư modulo 3
     wire signed [31:0] reg_c_32 = (OUT_WIDTH == 32) ? reg_c : { { (32-OUT_WIDTH){reg_c[OUT_WIDTH-1]} }, reg_c };
     mod3_encoder_8b  u_enc_a (.in(reg_a), .out(a_mod3));
     mod3_encoder_8b  u_enc_b (.in(reg_b), .out(b_mod3));
@@ -68,23 +99,22 @@ module secure_mac #(
 
     wire [3:0] ab_mod3_product = a_mod3 * b_mod3;
 
-    // TẦNG PIPELINE 2: Các thanh ghi trung gian
-  
-    reg signed [2*IN_WIDTH-1:0] pipe_product;
-    reg signed [OUT_WIDTH-1:0]  pipe_c;
-    reg [3:0]                   pipe_ab_mod3;
-    reg [1:0]                   pipe_c_mod3;
-    reg                         valid_d2;
-    reg                         valid_d2_n; // Dual-rail complementary register
+    // Stage 2: Nhân, tích lũy trung gian & Modulo-3 Encoder
+    logic signed [2*IN_WIDTH-1:0] pipe_product;
+    logic signed [OUT_WIDTH-1:0]  pipe_c;
+    logic [3:0]                   pipe_ab_mod3;
+    logic [1:0]                   pipe_c_mod3;
+    logic                         valid_d2;
+    logic                         valid_d2_n;
 
-    always @(posedge clk or negedge rst_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            pipe_product <= 0;
-            pipe_c       <= 0;
-            pipe_ab_mod3 <= 0;
-            pipe_c_mod3  <= 0;
-            valid_d2     <= 0;
-            valid_d2_n   <= 1;
+            pipe_product <= '0;
+            pipe_c       <= '0;
+            pipe_ab_mod3 <= '0;
+            pipe_c_mod3  <= '0;
+            valid_d2     <= 1'b0;
+            valid_d2_n   <= 1'b1;
         end else begin
             valid_d2   <= valid_d1;
             valid_d2_n <= ~valid_d1;
@@ -97,49 +127,76 @@ module secure_mac #(
         end
     end
 
-    // TẦNG PIPELINE 2.5: Khối tổ hợp 2
-    
-    assign mac_result = pipe_product + pipe_c;
-
-    wire [1:0] out_mod3;       
-    wire [1:0] expected_mod3;  
+    wire signed [OUT_WIDTH-1:0] mac_result = pipe_product + pipe_c;
+    wire [1:0] stage2_out_mod3;
+    wire [1:0] stage2_expected_mod3;
 
     wire signed [31:0] mac_result_32 = (OUT_WIDTH == 32) ? mac_result : { { (32-OUT_WIDTH){mac_result[OUT_WIDTH-1]} }, mac_result };
-    mod3_encoder_32b u_enc_out (.in(mac_result_32), .out(out_mod3));
+    mod3_encoder_32b u_enc_out (.in(mac_result_32), .out(stage2_out_mod3));
 
     wire [3:0] rns_calc = pipe_ab_mod3 + pipe_c_mod3;
-    reg  [1:0] expected_mod3_reg;
+    logic [1:0] expected_mod3_comb;
 
-    always @(*) begin
+    always_comb begin
         case (rns_calc)
-            4'd0, 4'd3, 4'd6, 4'd9: expected_mod3_reg = 2'd0;
-            4'd1, 4'd4, 4'd7:       expected_mod3_reg = 2'd1;
-            4'd2, 4'd5, 4'd8:       expected_mod3_reg = 2'd2;
-            default:                expected_mod3_reg = 2'd0; 
+            4'd0, 4'd3, 4'd6, 4'd9: expected_mod3_comb = 2'd0;
+            4'd1, 4'd4, 4'd7:       expected_mod3_comb = 2'd1;
+            4'd2, 4'd5, 4'd8:       expected_mod3_comb = 2'd2;
+            default:                expected_mod3_comb = 2'd0;
         endcase
     end
-    assign expected_mod3 = expected_mod3_reg;
+    assign stage2_expected_mod3 = expected_mod3_comb;
 
-    // Khối phát hiện lỗi: Modulo-3 CED + ML Adaptive Range Anomaly + Dual-Rail Control Parity
-    wire mod3_mismatch = (expected_mod3 != out_mod3);
-    
+    // Stage 3: Chốt Mod3 residue & Kiểm tra bất thường (tách trễ tới hạn đạt WNS >= 0 tại 200 MHz)
+    logic signed [OUT_WIDTH-1:0] pipe_mac_result;
+    logic [1:0]                  pipe_out_mod3;
+    logic [1:0]                  pipe_expected_mod3;
+    logic                        valid_d3;
+    logic                        valid_d3_n;
+
+    always_ff @(posedge clk or negedge rst_n) begin
+        if (!rst_n) begin
+            pipe_mac_result    <= '0;
+            pipe_out_mod3      <= '0;
+            pipe_expected_mod3 <= '0;
+            valid_d3           <= 1'b0;
+            valid_d3_n         <= 1'b1;
+        end else begin
+            valid_d3   <= valid_d2;
+            valid_d3_n <= ~valid_d2;
+            if (valid_d2) begin
+                pipe_mac_result    <= mac_result;
+                pipe_out_mod3      <= stage2_out_mod3;
+                pipe_expected_mod3 <= stage2_expected_mod3;
+            end
+        end
+    end
+
+    wire mod3_mismatch = (pipe_expected_mod3 != pipe_out_mod3);
+
     // ML-Guided Online Adaptive Range Anomaly Detection (EWMA + MAD 3-sigma)
     wire signed [OUT_WIDTH-1:0] adaptive_threshold;
     wire signed [OUT_WIDTH-1:0] ewma_mean;
     wire signed [OUT_WIDTH-1:0] ewma_mad;
     wire                        ewma_warmup_done;
 
+    wire safe_context_reset = (context_reset === 1'b1) ? 1'b1 : 1'b0;
+    wire safe_alpha_sel     = (alpha_sel === 1'b0) ? 1'b0 : 1'b1;
+
     ewma_tracker #(
         .WIDTH(OUT_WIDTH),
         .ALPHA_SHIFT(4),
+        .ALPHA_FAST_SHIFT(2),
         .WARMUP_SAMPLES(16),
         .DEFAULT_THRESHOLD(ANOMALY_THRESHOLD),
         .MIN_THRESHOLD_FLOOR((OUT_WIDTH >= 32) ? 32'sd2000 : 16'sd500)
     ) u_ewma (
         .clk(clk),
         .rst_n(rst_n),
-        .data_in(mac_result),
-        .valid_in(valid_d2 & ~mod3_mismatch),
+        .data_in(pipe_mac_result),
+        .valid_in(valid_d3 & ~mod3_mismatch),
+        .context_reset(safe_context_reset),
+        .alpha_sel(safe_alpha_sel),
         .threshold_out(adaptive_threshold),
         .mean_out(ewma_mean),
         .mad_out(ewma_mad),
@@ -147,43 +204,47 @@ module secure_mac #(
     );
 
     wire signed [OUT_WIDTH-1:0] active_threshold = (USE_ADAPTIVE_THRESHOLD) ? adaptive_threshold : ANOMALY_THRESHOLD;
-    wire range_anomaly = (mac_result > active_threshold || mac_result < -active_threshold);
 
-    // Control Path Integrity: Phát hiện SEU làm sai lệch trạng thái pipeline control
-    wire control_fault = (valid_d1 == valid_d1_n) || (valid_d2 == valid_d2_n);
+    // Range anomaly check với hysteresis deadband chống flickering và bảo vệ chống tràn số
+    wire signed [OUT_WIDTH:0] sum_upper = {active_threshold[OUT_WIDTH-1], active_threshold} + {HYSTERESIS_BAND[OUT_WIDTH-1], HYSTERESIS_BAND};
+    wire signed [OUT_WIDTH-1:0] max_pos_val = {1'b0, {(OUT_WIDTH-1){1'b1}}};
+    wire signed [OUT_WIDTH-1:0] upper_thresh_hyst = (sum_upper > {1'b0, max_pos_val}) ? max_pos_val : sum_upper[OUT_WIDTH-1:0];
+    wire signed [OUT_WIDTH-1:0] lower_thresh_hyst = -upper_thresh_hyst;
+    wire range_anomaly = (pipe_mac_result > upper_thresh_hyst) || (pipe_mac_result < lower_thresh_hyst);
 
-    // Tín hiệu kích hoạt Rollback khi Modulo-3 không khớp, dị thường biên, hoặc lỗi điều khiển
+    // Control Path Integrity: Parity check kép giữa valid và valid_n
+    wire control_fault = (valid_d1 == valid_d1_n) || (valid_d2 == valid_d2_n) || (valid_d3 == valid_d3_n);
+
+    // Disagreement trigger: Modulo-3 sai lệch | Vượt biên biên độ | Lỗi điều khiển
     wire disagreement = mod3_mismatch | range_anomaly | control_fault;
 
-    // TẦNG PIPELINE 3: Thanh ghi ngõ ra, Cờ lỗi & Khôi phục trạng thái
-   
-    reg signed [OUT_WIDTH-1:0] shadow_accumulator;
+    // Stage 4: Chốt ngõ ra & Phục hồi Rollback
+    logic signed [OUT_WIDTH-1:0] shadow_accumulator;
 
-    always @(posedge clk or negedge rst_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            out                <= 0;
-            shadow_accumulator <= 0;
-            fault_detected     <= 0;
-            rollback           <= 0;
-            valid              <= 0;
+            out                <= '0;
+            shadow_accumulator <= '0;
+            fault_detected     <= 1'b0;
+            rollback           <= 1'b0;
+            valid              <= 1'b0;
         end else begin
-            valid <= valid_d2 & (~control_fault);
-            if (valid_d2 || control_fault) begin
+            valid <= valid_d3 & (~control_fault);
+            if (valid_d3 || control_fault) begin
                 if (disagreement) begin
-                    // Lỗi được phát hiện -> Kích hoạt Rollback tức thời
-                    out            <= shadow_accumulator; // Khôi phục giá trị cũ hợp lệ
+                    // Phát hiện lỗi -> Phục hồi trạng thái cũ (Rollback tức thời)
+                    out            <= shadow_accumulator;
                     fault_detected <= 1'b1;
                     rollback       <= 1'b1;
                 end else begin
-                    // Hoạt động bình thường -> Cập nhật out và shadow
-                    out                <= mac_result;
-                    shadow_accumulator <= mac_result;     // Lưu lại kết quả hợp lệ
-                    fault_detected     <= 1'b0;
-                    rollback           <= 1'b0;
+                    out                 <= pipe_mac_result;
+                    shadow_accumulator  <= pipe_mac_result;
+                    fault_detected      <= 1'b0;
+                    rollback            <= 1'b0;
                 end
             end else begin
-                fault_detected <= 0;
-                rollback       <= 0;
+                fault_detected <= 1'b0;
+                rollback       <= 1'b0;
             end
         end
     end
@@ -205,119 +266,33 @@ module secure_mac #(
 endmodule
 
 
-// Module hỗ trợ: Bộ mã hóa Modulo 3 cho số 8-bit có dấu dạng Cây nhị phân tối ưu
+// Bộ mã hóa Modulo 3 cho số 8-bit có dấu dạng cây nhị phân
 module mod3_encoder_8b (
     input  wire [7:0] in,
     output wire [1:0] out
 );
-    // Hàm cộng modulo 3 giữa 2 số dư 2-bit (1 tầng LUT4)
-    function [1:0] mod3_add;
-        input [1:0] x;
-        input [1:0] y;
-        reg [2:0] s;
-        begin
-            s = x + y;
-            case (s)
-                3'd0, 3'd3: mod3_add = 2'd0;
-                3'd1, 3'd4: mod3_add = 2'd1;
-                3'd2:       mod3_add = 2'd2;
-                default:    mod3_add = 2'd0;
-            endcase
-        end
-    endfunction
+    import mod3_pkg::*;
 
-    // Chuyển cặp bit [1:0] thông thường thành số dư mod 3 (2*b1 + b0 mod 3)
-    function [1:0] slice_mod3;
-        input [1:0] pair;
-        begin
-            case (pair)
-                2'b00, 2'b11: slice_mod3 = 2'd0;
-                2'b01:        slice_mod3 = 2'd1;
-                2'b10:        slice_mod3 = 2'd2;
-                default:      slice_mod3 = 2'd0;
-            endcase
-        end
-    endfunction
-
-    // Chuyển cặp bit MSB có dấu [7:6] (-128*b7 + 64*b6 = 1*b7 + 1*b6 mod 3)
-    function [1:0] msb_pair_mod3;
-        input [1:0] pair;
-        begin
-            case (pair)
-                2'b00:   msb_pair_mod3 = 2'd0;
-                2'b01:   msb_pair_mod3 = 2'd1;
-                2'b10:   msb_pair_mod3 = 2'd1;
-                2'b11:   msb_pair_mod3 = 2'd2;
-                default: msb_pair_mod3 = 2'd0;
-            endcase
-        end
-    endfunction
-
-    // Tầng 0: 4 cặp bit
     wire [1:0] l0_0 = slice_mod3(in[1:0]);
     wire [1:0] l0_1 = slice_mod3(in[3:2]);
     wire [1:0] l0_2 = slice_mod3(in[5:4]);
     wire [1:0] l0_3 = msb_pair_mod3(in[7:6]);
 
-    // Tầng 1: 2 nút
     wire [1:0] l1_0 = mod3_add(l0_0, l0_1);
     wire [1:0] l1_1 = mod3_add(l0_2, l0_3);
 
-    // Tầng 2: Kết quả ngõ ra
     assign out = mod3_add(l1_0, l1_1);
 
 endmodule
 
 
-// Module hỗ trợ: Bộ mã hóa Modulo 3 cho số 32-bit có dấu dạng Cây nhị phân 5 tầng
+// Bộ mã hóa Modulo 3 cho số 32-bit có dấu dạng cây nhị phân 5 tầng
 module mod3_encoder_32b (
     input  wire [31:0] in,
     output wire [1:0]  out
 );
-    // Hàm cộng modulo 3 giữa 2 số dư 2-bit (1 tầng LUT4)
-    function [1:0] mod3_add;
-        input [1:0] x;
-        input [1:0] y;
-        reg [2:0] s;
-        begin
-            s = x + y;
-            case (s)
-                3'd0, 3'd3: mod3_add = 2'd0;
-                3'd1, 3'd4: mod3_add = 2'd1;
-                3'd2:       mod3_add = 2'd2;
-                default:    mod3_add = 2'd0;
-            endcase
-        end
-    endfunction
+    import mod3_pkg::*;
 
-    // Chuyển cặp bit [1:0] thông thường thành số dư mod 3
-    function [1:0] slice_mod3;
-        input [1:0] pair;
-        begin
-            case (pair)
-                2'b00, 2'b11: slice_mod3 = 2'd0;
-                2'b01:        slice_mod3 = 2'd1;
-                2'b10:        slice_mod3 = 2'd2;
-                default:      slice_mod3 = 2'd0;
-            endcase
-        end
-    endfunction
-
-    // Chuyển cặp bit MSB [31:30] (-2^31*b31 + 2^30*b30 = 1*b31 + 1*b30 mod 3)
-    function [1:0] msb_pair_mod3;
-        input [1:0] pair;
-        begin
-            case (pair)
-                2'b00:   msb_pair_mod3 = 2'd0;
-                2'b01:   msb_pair_mod3 = 2'd1;
-                2'b10:   msb_pair_mod3 = 2'd1;
-                2'b11:   msb_pair_mod3 = 2'd2;
-                default: msb_pair_mod3 = 2'd0;
-            endcase
-        end
-    endfunction
-
-    // Tầng 0: 16 cặp bit (15 cặp thường + 1 cặp MSB)
     wire [1:0] l0_0  = slice_mod3(in[1:0]);
     wire [1:0] l0_1  = slice_mod3(in[3:2]);
     wire [1:0] l0_2  = slice_mod3(in[5:4]);
@@ -335,7 +310,6 @@ module mod3_encoder_32b (
     wire [1:0] l0_14 = slice_mod3(in[29:28]);
     wire [1:0] l0_15 = msb_pair_mod3(in[31:30]);
 
-    // Tầng 1: 8 nút
     wire [1:0] l1_0 = mod3_add(l0_0,  l0_1);
     wire [1:0] l1_1 = mod3_add(l0_2,  l0_3);
     wire [1:0] l1_2 = mod3_add(l0_4,  l0_5);
@@ -345,17 +319,14 @@ module mod3_encoder_32b (
     wire [1:0] l1_6 = mod3_add(l0_12, l0_13);
     wire [1:0] l1_7 = mod3_add(l0_14, l0_15);
 
-    // Tầng 2: 4 nút
     wire [1:0] l2_0 = mod3_add(l1_0, l1_1);
     wire [1:0] l2_1 = mod3_add(l1_2, l1_3);
     wire [1:0] l2_2 = mod3_add(l1_4, l1_5);
     wire [1:0] l2_3 = mod3_add(l1_6, l1_7);
 
-    // Tầng 3: 2 nút
     wire [1:0] l3_0 = mod3_add(l2_0, l2_1);
     wire [1:0] l3_1 = mod3_add(l2_2, l2_3);
 
-    // Tầng 4: Kết quả ngõ ra
     assign out = mod3_add(l3_0, l3_1);
 
 endmodule

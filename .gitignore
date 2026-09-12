@@ -1,5 +1,6 @@
 # ==============================================================================
 # Git Ignore Configuration for RISC-V + Secure MAC Hardware SoC Project
+# Strictly keeping ONLY functional source code on GitHub (RTL, TB, SW, Scripts)
 # ==============================================================================
 
 # Byte-compiled / Python Cache & Test Artifacts
@@ -37,11 +38,6 @@ xsim.dir/
 usage_statistics_webtalk.*
 _xmsgs/
 
-# Microsoft Office Temporary Lock Files
-~$*.docx
-~$*.pptx
-~$*.xlsx
-
 # Operating System & Editor Artifacts
 .DS_Store
 Thumbs.db
@@ -57,8 +53,50 @@ ehthumbs.db
 .agents/
 AGENTS.md
 
-# Local Documentation, Research Papers & Academic Manuscripts (Kept locally, excluded from Git)
-tailieuthamkhao/
-docs/
-paper/
+# ==============================================================================
+# EXCLUDED ARTIFACTS: Images, Documents, Generated Files (LOCAL ONLY)
+# ==============================================================================
 
+# 1. Images, Diagrams & Graphical Assets
+*.png
+*.jpg
+*.jpeg
+*.svg
+*.drawio
+*.gif
+reports/figures/
+scratch/
+
+# 2. Academic Manuscripts, Research Papers, Documents & Drafts
+paper/
+docs/
+tailieuthamkhao/
+reports/
+*.docx
+~$*.docx
+*.pptx
+~$*.pptx
+*.xlsx
+~$*.xlsx
+*.pdf
+
+# 3. Paper Generation & Manuscript Tools (Local Only)
+tools/build_13_pages_main.py
+tools/export_to_overleaf.py
+tools/verify_paper.py
+tools/analysis/audit_figures_data.py
+tools/analysis/recreate_vivado_waveform.py
+tools/ml_analysis/plot_bit_vulnerability_bar.py
+
+# 4. Generated Artifacts, Binary Checkpoints, Bitstreams, Datasets & Archives
+*.bit
+*.dcp
+*.zip
+*.tar
+*.gz
+*.pkl
+synth/bitstreams/
+synth/checkpoints/
+synth/fpga_reports/
+tools/ml_analysis/data/
+tools/ml_analysis/models/

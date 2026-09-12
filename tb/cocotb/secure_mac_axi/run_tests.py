@@ -30,11 +30,12 @@ def test_secure_mac_axi_runner():
     """Build and run all Cocotb tests for secure_mac_axi."""
     test_dir = Path(__file__).resolve().parent
     root_dir = test_dir.parent.parent.parent  # D:/NCKH
-    
     sources = [
         root_dir / "rtl" / "mac" / "secure_mac_sva.sv",
+        root_dir / "rtl" / "mac" / "ewma_tracker_sva.sv",
         root_dir / "rtl" / "mac" / "ewma_tracker.sv",
         root_dir / "rtl" / "mac" / "secure_mac.v",
+        root_dir / "rtl" / "mac" / "secure_mac_axi_sva.sv",
         root_dir / "rtl" / "mac" / "secure_mac_axi.v",
     ]
     for src in sources:

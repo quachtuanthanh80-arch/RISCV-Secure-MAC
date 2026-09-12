@@ -1,13 +1,5 @@
 `timescale 1ns/1ps
 
-/**
- * SystemVerilog Assertions (SVA) Checker for RISC-V Pipeline Hazard Unit.
- * Validates:
- * 1. Load-Use Hazard detection and mandatory Pipeline Stall/Bubble generation
- * 2. Branch/Jump misprediction pipeline flush
- * 3. Forwarding precedence: EX/MEM (newer) over MEM/WB (older)
- * 4. Zero-Register (x0) isolation invariant
- */
 module hazard_unit_sva (
     input logic clk,
     input logic rst_n,

@@ -1,170 +1,113 @@
 `timescale 1ns/1ps
-// =============================================================================
-// DMR_MAC – Dual Modular Redundancy (DMR) Lockstep MAC Unit
-// =============================================================================
-// Architecture:
-//   - Two fully redundant, identical 3-stage signed Multiply-Accumulate pipelines
-//     (Core 0 = Primary Execution, Core 1 = Shadow Verification).
-//   - Lockstep Comparator: Monitors pipeline validity and final accumulator values.
-//   - Immediate fault detection: Flags single-event transients (SEU) and stuck-at
-//     faults occurring in either pipeline without silent data corruption.
-// Standards:
-//   - Synthesizable Verilog-2001 / SystemVerilog, FPGA & ASIC friendly.
-// =============================================================================
 
 module dmr_mac #(
-    parameter IN_WIDTH  = 8,
-    parameter OUT_WIDTH = 32
+    parameter int IN_WIDTH  = 8,
+    parameter int OUT_WIDTH = 32
 )(
-    input  wire                         clk,
-    input  wire                         rst_n,
-    input  wire signed [IN_WIDTH-1:0]   a,
-    input  wire signed [IN_WIDTH-1:0]   b,
-    input  wire signed [OUT_WIDTH-1:0]  c,
-    input  wire                         start,
-    output reg  signed [OUT_WIDTH-1:0]  out,
-    output reg                          valid,
-    output reg                          fault_detected
+    input  logic                         clk,
+    input  logic                         rst_n,
+    input  logic signed [IN_WIDTH-1:0]   a,
+    input  logic signed [IN_WIDTH-1:0]   b,
+    input  logic signed [OUT_WIDTH-1:0]  c,
+    input  logic                         start,
+    output logic signed [OUT_WIDTH-1:0]  out,
+    output logic                         valid,
+    output logic                         fault_detected,
+    output logic                         rollback
 );
 
-    // =========================================================================
-    // CORE 0 (PRIMARY PIPELINE)
-    // =========================================================================
-    reg signed [IN_WIDTH-1:0]  c0_reg_a, c0_reg_b;
-    reg signed [OUT_WIDTH-1:0] c0_reg_c;
-    reg                        c0_valid_d1;
+    logic signed [IN_WIDTH-1:0]   core_reg_a[2], core_reg_b[2];
+    logic signed [OUT_WIDTH-1:0]  core_reg_c[2];
+    logic                         core_valid_d1[2];
 
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            c0_reg_a    <= {IN_WIDTH{1'b0}};
-            c0_reg_b    <= {IN_WIDTH{1'b0}};
-            c0_reg_c    <= {OUT_WIDTH{1'b0}};
-            c0_valid_d1 <= 1'b0;
-        end else begin
-            c0_valid_d1 <= start;
-            if (start) begin
-                c0_reg_a <= a;
-                c0_reg_b <= b;
-                c0_reg_c <= c;
+    logic signed [2*IN_WIDTH-1:0] core_pipe_product[2];
+    logic signed [OUT_WIDTH-1:0]  core_pipe_c[2];
+    logic                         core_valid_d2[2];
+
+    wire signed [OUT_WIDTH-1:0]   core_mac_result[2];
+    logic signed [OUT_WIDTH-1:0]  core_out[2];
+    logic                         core_valid[2];
+
+    generate
+        for (genvar i = 0; i < 2; i++) begin : gen_dmr_core
+            always_ff @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
+                    core_reg_a[i]    <= '0;
+                    core_reg_b[i]    <= '0;
+                    core_reg_c[i]    <= '0;
+                    core_valid_d1[i] <= 1'b0;
+                end else begin
+                    core_valid_d1[i] <= start;
+                    if (start) begin
+                        core_reg_a[i] <= a;
+                        core_reg_b[i] <= b;
+                        core_reg_c[i] <= c;
+                    end
+                end
+            end
+
+            wire signed [2*IN_WIDTH-1:0] prod = core_reg_a[i] * core_reg_b[i];
+
+            always_ff @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
+                    core_pipe_product[i] <= '0;
+                    core_pipe_c[i]       <= '0;
+                    core_valid_d2[i]     <= 1'b0;
+                end else begin
+                    core_valid_d2[i] <= core_valid_d1[i];
+                    if (core_valid_d1[i]) begin
+                        core_pipe_product[i] <= prod;
+                        core_pipe_c[i]       <= core_reg_c[i];
+                    end
+                end
+            end
+
+            wire signed [OUT_WIDTH-1:0] prod_ext = {{ (OUT_WIDTH-2*IN_WIDTH){core_pipe_product[i][2*IN_WIDTH-1]} }, core_pipe_product[i]};
+            assign core_mac_result[i] = prod_ext + core_pipe_c[i];
+
+            always_ff @(posedge clk or negedge rst_n) begin
+                if (!rst_n) begin
+                    core_out[i]   <= '0;
+                    core_valid[i] <= 1'b0;
+                end else begin
+                    core_valid[i] <= core_valid_d2[i];
+                    if (core_valid_d2[i]) begin
+                        core_out[i] <= core_mac_result[i];
+                    end
+                end
             end
         end
-    end
+    endgenerate
 
-    wire signed [2*IN_WIDTH-1:0] c0_product = c0_reg_a * c0_reg_b;
+    // Lockstep comparator & Shadow Accumulator Rollback (ISO 26262)
+    wire lockstep_mismatch = (core_valid[0] != core_valid[1]) || 
+                             (core_valid_d2[0] && (core_mac_result[0] != core_mac_result[1])) ||
+                             (core_valid[0] && (core_out[0] != core_out[1]));
 
-    reg signed [2*IN_WIDTH-1:0] c0_pipe_product;
-    reg signed [OUT_WIDTH-1:0]  c0_pipe_c;
-    reg                         c0_valid_d2;
+    logic signed [OUT_WIDTH-1:0] shadow_accumulator;
 
-    always @(posedge clk or negedge rst_n) begin
+    always_ff @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
-            c0_pipe_product <= {(2*IN_WIDTH){1'b0}};
-            c0_pipe_c       <= {OUT_WIDTH{1'b0}};
-            c0_valid_d2     <= 1'b0;
+            out                <= '0;
+            shadow_accumulator <= '0;
+            valid              <= 1'b0;
+            fault_detected     <= 1'b0;
+            rollback           <= 1'b0;
         end else begin
-            c0_valid_d2 <= c0_valid_d1;
-            if (c0_valid_d1) begin
-                c0_pipe_product <= c0_product;
-                c0_pipe_c       <= c0_reg_c;
-            end
-        end
-    end
-
-    wire signed [OUT_WIDTH-1:0] c0_product_ext = {{ (OUT_WIDTH-2*IN_WIDTH){c0_pipe_product[2*IN_WIDTH-1]} }, c0_pipe_product};
-    wire signed [OUT_WIDTH-1:0] c0_mac_result  = c0_product_ext + c0_pipe_c;
-
-    reg signed [OUT_WIDTH-1:0] c0_out;
-    reg                        c0_valid;
-
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            c0_out   <= {OUT_WIDTH{1'b0}};
-            c0_valid <= 1'b0;
-        end else begin
-            c0_valid <= c0_valid_d2;
-            if (c0_valid_d2) begin
-                c0_out <= c0_mac_result;
-            end
-        end
-    end
-
-    // =========================================================================
-    // CORE 1 (SHADOW REDUNDANT PIPELINE)
-    // =========================================================================
-    reg signed [IN_WIDTH-1:0]  c1_reg_a, c1_reg_b;
-    reg signed [OUT_WIDTH-1:0] c1_reg_c;
-    reg                        c1_valid_d1;
-
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            c1_reg_a    <= {IN_WIDTH{1'b0}};
-            c1_reg_b    <= {IN_WIDTH{1'b0}};
-            c1_reg_c    <= {OUT_WIDTH{1'b0}};
-            c1_valid_d1 <= 1'b0;
-        end else begin
-            c1_valid_d1 <= start;
-            if (start) begin
-                c1_reg_a <= a;
-                c1_reg_b <= b;
-                c1_reg_c <= c;
-            end
-        end
-    end
-
-    wire signed [2*IN_WIDTH-1:0] c1_product = c1_reg_a * c1_reg_b;
-
-    reg signed [2*IN_WIDTH-1:0] c1_pipe_product;
-    reg signed [OUT_WIDTH-1:0]  c1_pipe_c;
-    reg                         c1_valid_d2;
-
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            c1_pipe_product <= {(2*IN_WIDTH){1'b0}};
-            c1_pipe_c       <= {OUT_WIDTH{1'b0}};
-            c1_valid_d2     <= 1'b0;
-        end else begin
-            c1_valid_d2 <= c1_valid_d1;
-            if (c1_valid_d1) begin
-                c1_pipe_product <= c1_product;
-                c1_pipe_c       <= c1_reg_c;
-            end
-        end
-    end
-
-    wire signed [OUT_WIDTH-1:0] c1_product_ext = {{ (OUT_WIDTH-2*IN_WIDTH){c1_pipe_product[2*IN_WIDTH-1]} }, c1_pipe_product};
-    wire signed [OUT_WIDTH-1:0] c1_mac_result  = c1_product_ext + c1_pipe_c;
-
-    reg signed [OUT_WIDTH-1:0] c1_out;
-    reg                        c1_valid;
-
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            c1_out   <= {OUT_WIDTH{1'b0}};
-            c1_valid <= 1'b0;
-        end else begin
-            c1_valid <= c1_valid_d2;
-            if (c1_valid_d2) begin
-                c1_out <= c1_mac_result;
-            end
-        end
-    end
-
-    // =========================================================================
-    // LOCKSTEP COMPARATOR & OUTPUT STAGE
-    // =========================================================================
-    wire lockstep_mismatch = (c0_valid != c1_valid) || 
-                             (c0_valid_d2 && (c0_mac_result != c1_mac_result)) ||
-                             (c0_valid && (c0_out != c1_out));
-
-    always @(posedge clk or negedge rst_n) begin
-        if (!rst_n) begin
-            out            <= {OUT_WIDTH{1'b0}};
-            valid          <= 1'b0;
-            fault_detected <= 1'b0;
-        end else begin
-            valid          <= c0_valid;
-            out            <= c0_out;
+            valid          <= core_valid[0];
             fault_detected <= lockstep_mismatch;
+
+            if (lockstep_mismatch) begin
+                // Phục hồi Rollback về trạng thái trước đó
+                out      <= shadow_accumulator;
+                rollback <= 1'b1;
+            end else if (core_valid[0]) begin
+                out                 <= core_out[0];
+                shadow_accumulator  <= core_out[0];
+                rollback            <= 1'b0;
+            end else begin
+                rollback <= 1'b0;
+            end
         end
     end
 

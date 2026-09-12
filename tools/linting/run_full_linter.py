@@ -69,6 +69,8 @@ print("=" * 80)
 sys_files = [
     str(workspace / "rtl" / "top" / "top_module.v"),
     str(workspace / "rtl" / "mac" / "secure_mac_sva.sv"),
+    str(workspace / "rtl" / "mac" / "ewma_tracker_sva.sv"),
+    str(workspace / "rtl" / "mac" / "ewma_tracker.sv"),
     str(workspace / "rtl" / "mac" / "secure_mac.v"),
     str(workspace / "rtl" / "cpu" / "riscv_cpu.sv"),
     str(workspace / "rtl" / "cpu" / "imem.sv"),
@@ -104,6 +106,8 @@ else:
 print("\n--- Testbench: tb/sv_tb/tb_secure_mac.sv ---")
 comp_tb = Compilation()
 comp_tb.addSyntaxTree(SyntaxTree.fromFile(str(workspace / "rtl" / "mac" / "secure_mac_sva.sv")))
+comp_tb.addSyntaxTree(SyntaxTree.fromFile(str(workspace / "rtl" / "mac" / "ewma_tracker_sva.sv")))
+comp_tb.addSyntaxTree(SyntaxTree.fromFile(str(workspace / "rtl" / "mac" / "ewma_tracker.sv")))
 comp_tb.addSyntaxTree(SyntaxTree.fromFile(str(workspace / "rtl" / "mac" / "secure_mac.v")))
 comp_tb.addSyntaxTree(SyntaxTree.fromFile(str(workspace / "tb" / "sv_tb" / "tb_secure_mac.sv")))
 diags_tb = comp_tb.getAllDiagnostics()
@@ -133,8 +137,11 @@ axi_sys_files = [
     str(workspace / "rtl" / "bus" / "cpu_to_axi_master.v"),
     str(workspace / "rtl" / "bus" / "axi_interconnect_1m2s.v"),
     str(workspace / "rtl" / "cpu" / "dmem_axi.v"),
+    str(workspace / "rtl" / "mac" / "secure_mac_axi_sva.sv"),
     str(workspace / "rtl" / "mac" / "secure_mac_axi.v"),
     str(workspace / "rtl" / "mac" / "secure_mac_sva.sv"),
+    str(workspace / "rtl" / "mac" / "ewma_tracker_sva.sv"),
+    str(workspace / "rtl" / "mac" / "ewma_tracker.sv"),
     str(workspace / "rtl" / "mac" / "secure_mac.v"),
     str(workspace / "rtl" / "cpu" / "riscv_cpu.sv"),
     str(workspace / "rtl" / "cpu" / "imem.sv"),

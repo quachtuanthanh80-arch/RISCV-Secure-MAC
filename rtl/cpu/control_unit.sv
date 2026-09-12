@@ -104,10 +104,9 @@ module control_unit (
             BRANCH: begin
                 Branch    = 1'b1;
                 ImmSrc    = 3'b010; // B-type
-                ALUSrcA   = 2'b00; // rs1
-                ALUSrcB   = 2'b00; // rs2 (for comparison)
-                // ALUOp can be SUB for comparison, or we can use a dedicated branch comparator.
-                // We will use a dedicated branch comparator.
+                ALUSrcA   = 2'b00;
+                ALUSrcB   = 2'b00;
+                // Sử dụng branch comparator chuyên dụng để so sánh nhánh
                 ALUOp     = 4'b0000;
             end
 
@@ -142,10 +141,9 @@ module control_unit (
             end
 
             MacOp: begin
-                MacStart = 1'b1;
-                // Wait, MAC reads from registers.
-                // Assuming R-type custom format: mac_out = rs1 * rs2 + c?
-                // For now, just generate MacStart.
+                MacStart  = 1'b1;
+                RegWrite  = 1'b1;
+                ResultSrc = 2'b11; // MAC result writeback
             end
 
             default: ;

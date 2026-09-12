@@ -1,29 +1,4 @@
 `timescale 1ns/1ps
-//=============================================================================
-// secure_mac_axi.v – ARM AMBA AXI4-Lite Slave Wrapper for Secure MAC IP
-//
-// Compliant with ARM AXI4-Lite Specification (IHI 0022E).
-// Standard 5-channel AXI4-Lite Slave interface:
-//   - Write Address Channel (AW)
-//   - Write Data Channel (W)
-//   - Write Response Channel (B)
-//   - Read Address Channel (AR)
-//   - Read Data Channel (R)
-//
-// Register Map (Base: 0x8000_0000, 32-bit aligned):
-//   Offset 0x00: REG_MAC_A      [R/W] [7:0]  Toán hạng A (signed 8-bit)
-//   Offset 0x04: REG_MAC_B      [R/W] [7:0]  Toán hạng B (signed 8-bit)
-//   Offset 0x08: REG_MAC_C/OUT  [R/W] Ghi: C (tích lũy), Đọc: Kết quả MAC
-//   Offset 0x0C: REG_MAC_CTRL   [W]   Bit 0: START pulse (tự động xóa sau 1 chu kỳ)
-//   Offset 0x10: REG_MAC_OUT    [R]   [OUT_WIDTH-1:0] Kết quả MAC (sau rollback nếu lỗi)
-//   Offset 0x14: REG_MAC_STATUS [R]   Bit 0: fault_detected (kết hợp sticky)
-//                                     Bit 1: valid / done (kết hợp sticky)
-//                                     Bit 2: rollback
-//   Offset 0x18: REG_MAC_CONFIG [R/W] Ngưỡng dị thường ANOMALY_THRESHOLD động
-//
-// Interrupt:
-//   irq: Kích hoạt khi phát hiện lỗi (fault_detected) hoặc hoàn thành phép tính
-//=============================================================================
 
 module secure_mac_axi #(
     parameter integer IN_WIDTH             = 8,
@@ -31,58 +6,48 @@ module secure_mac_axi #(
     parameter integer C_S_AXI_DATA_WIDTH   = 32,
     parameter integer C_S_AXI_ADDR_WIDTH   = 32
 )(
-    // AXI4-Lite Clock and Active-Low Reset
     input  wire                                 aclk,
     input  wire                                 aresetn,
 
-    // Write Address Channel (AW)
     input  wire [C_S_AXI_ADDR_WIDTH-1:0]        s_axi_awaddr,
     input  wire [2:0]                           s_axi_awprot,
     input  wire                                 s_axi_awvalid,
     output wire                                 s_axi_awready,
 
-    // Write Data Channel (W)
     input  wire [C_S_AXI_DATA_WIDTH-1:0]        s_axi_wdata,
     input  wire [(C_S_AXI_DATA_WIDTH/8)-1:0]    s_axi_wstrb,
     input  wire                                 s_axi_wvalid,
     output wire                                 s_axi_wready,
 
-    // Write Response Channel (B)
     output wire [1:0]                           s_axi_bresp,
     output wire                                 s_axi_bvalid,
     input  wire                                 s_axi_bready,
 
-    // Read Address Channel (AR)
     input  wire [C_S_AXI_ADDR_WIDTH-1:0]        s_axi_araddr,
     input  wire [2:0]                           s_axi_arprot,
     input  wire                                 s_axi_arvalid,
     output wire                                 s_axi_arready,
 
-    // Read Data Channel (R)
     output wire [C_S_AXI_DATA_WIDTH-1:0]        s_axi_rdata,
     output wire [1:0]                           s_axi_rresp,
     output wire                                 s_axi_rvalid,
     input  wire                                 s_axi_rready,
 
-    // External Fault Interrupt
     output wire                                 irq
 );
 
-    //-------------------------------------------------------------------------
-    // Local Parameters for Register Offsets
-    //-------------------------------------------------------------------------
-    localparam [5:0] ADDR_MAC_A      = 6'h00; // 0x00
-    localparam [5:0] ADDR_MAC_B      = 6'h04; // 0x04
-    localparam [5:0] ADDR_MAC_C      = 6'h08; // 0x08
-    localparam [5:0] ADDR_MAC_CTRL   = 6'h0C; // 0x0C
-    localparam [5:0] ADDR_MAC_OUT    = 6'h10; // 0x10
-    localparam [5:0] ADDR_MAC_STATUS = 6'h14; // 0x14
-    localparam [5:0] ADDR_MAC_CONFIG = 6'h18; // 0x18
+    localparam [5:0] ADDR_MAC_A      = 6'h00; // Toán hạng A (signed 8-bit)
+    localparam [5:0] ADDR_MAC_B      = 6'h04; // Toán hạng B (signed 8-bit)
+    localparam [5:0] ADDR_MAC_C      = 6'h08; // Ghi: toán hạng C, Đọc: kết quả MAC
+    localparam [5:0] ADDR_MAC_CTRL   = 6'h0C; // Bit 0: START pulse (tự động xóa sau 1 chu kỳ)
+    localparam [5:0] ADDR_MAC_OUT    = 6'h10; // Kết quả MAC sau rollback
+    localparam [5:0] ADDR_MAC_STATUS = 6'h14; // Bit 0: fault, Bit 1: valid, Bit 2: rollback
+    localparam [5:0] ADDR_MAC_CONFIG = 6'h18; // Ngưỡng dị thường động ANOMALY_THRESHOLD
 
     localparam [1:0] AXI_RESP_OKAY   = 2'b00;
     localparam [1:0] AXI_RESP_SLVERR = 2'b10;
 
-    // Address Alignment and Range Validation (ARM AXI4-Lite Standard)
+    // Write Protection: Read-only registers (OUT, STATUS) bị từ chối ghi (SLVERR)
     wire wr_addr_valid = (s_axi_awaddr[1:0] == 2'b00) && 
                          (s_axi_awaddr[5:0] == ADDR_MAC_A ||
                           s_axi_awaddr[5:0] == ADDR_MAC_B ||
@@ -92,19 +57,55 @@ module secure_mac_axi #(
 
     wire rd_addr_valid = (s_axi_araddr[1:0] == 2'b00) && (s_axi_araddr[5:0] <= ADDR_MAC_CONFIG);
 
-    // Immediate handshake lines
+    // Chốt phản hồi AXI để giữ valid/resp khi master chưa kích hoạt ready
+    reg axi_bvalid_reg;
+    reg [1:0] axi_bresp_reg;
+    reg axi_rvalid_reg;
+    reg [1:0] axi_rresp_reg;
+    reg [C_S_AXI_DATA_WIDTH-1:0] axi_rdata_reg;
+    reg [C_S_AXI_DATA_WIDTH-1:0] reg_data_out;
+
+    wire write_handshake = s_axi_awvalid && s_axi_wvalid;
+    wire read_handshake  = s_axi_arvalid;
+
     assign s_axi_awready = 1'b1;
     assign s_axi_wready  = 1'b1;
-    assign s_axi_bvalid  = s_axi_awvalid & s_axi_wvalid;
-    assign s_axi_bresp   = wr_addr_valid ? AXI_RESP_OKAY : AXI_RESP_SLVERR;
-
     assign s_axi_arready = 1'b1;
-    assign s_axi_rvalid  = s_axi_arvalid;
-    assign s_axi_rresp   = rd_addr_valid ? AXI_RESP_OKAY : AXI_RESP_SLVERR;
 
-    //-------------------------------------------------------------------------
-    // Internal Registers for MAC Operands & Control
-    //-------------------------------------------------------------------------
+    assign s_axi_bvalid = write_handshake | axi_bvalid_reg;
+    assign s_axi_bresp  = axi_bvalid_reg ? axi_bresp_reg : (wr_addr_valid ? AXI_RESP_OKAY : AXI_RESP_SLVERR);
+
+    assign s_axi_rvalid = read_handshake | axi_rvalid_reg;
+    assign s_axi_rresp  = axi_rvalid_reg ? axi_rresp_reg : (rd_addr_valid ? AXI_RESP_OKAY : AXI_RESP_SLVERR);
+    assign s_axi_rdata  = axi_rvalid_reg ? axi_rdata_reg : reg_data_out;
+
+    always @(posedge aclk or negedge aresetn) begin
+        if (!aresetn) begin
+            axi_bvalid_reg <= 1'b0;
+            axi_bresp_reg  <= AXI_RESP_OKAY;
+            axi_rvalid_reg <= 1'b0;
+            axi_rresp_reg  <= AXI_RESP_OKAY;
+            axi_rdata_reg  <= {C_S_AXI_DATA_WIDTH{1'b0}};
+        end else begin
+            // Hold bvalid until bready arrives if master did not accept in same cycle
+            if (write_handshake && !s_axi_bready) begin
+                axi_bvalid_reg <= 1'b1;
+                axi_bresp_reg  <= wr_addr_valid ? AXI_RESP_OKAY : AXI_RESP_SLVERR;
+            end else if (s_axi_bready) begin
+                axi_bvalid_reg <= 1'b0;
+            end
+
+            // Hold rvalid and sampled data until rready arrives if master did not accept in same cycle
+            if (read_handshake && !s_axi_rready) begin
+                axi_rvalid_reg <= 1'b1;
+                axi_rresp_reg  <= rd_addr_valid ? AXI_RESP_OKAY : AXI_RESP_SLVERR;
+                axi_rdata_reg  <= reg_data_out;
+            end else if (s_axi_rready) begin
+                axi_rvalid_reg <= 1'b0;
+            end
+        end
+    end
+
     reg signed [IN_WIDTH-1:0]          reg_mac_a;
     reg signed [IN_WIDTH-1:0]          reg_mac_b;
     reg signed [OUT_WIDTH-1:0]         reg_mac_c;
@@ -122,8 +123,7 @@ module secure_mac_axi #(
     wire                               mac_core_valid;
     wire                               mac_core_rollback;
 
-    // Register Write Execution
-    wire slv_reg_wren = s_axi_awvalid & s_axi_wvalid;
+    wire slv_reg_wren = s_axi_awvalid && s_axi_wvalid && s_axi_awready && s_axi_wready;
 
     always @(posedge aclk or negedge aresetn) begin
         if (!aresetn) begin
@@ -145,26 +145,25 @@ module secure_mac_axi #(
                         if (s_axi_wstrb[0]) reg_mac_b <= s_axi_wdata[IN_WIDTH-1:0];
                     end
                     ADDR_MAC_C: begin
-                        if (s_axi_wstrb[0]) reg_mac_c[7:0]            <= s_axi_wdata[7:0];
-                        if (s_axi_wstrb[1]) reg_mac_c[OUT_WIDTH-1:8]  <= s_axi_wdata[OUT_WIDTH-1:8];
+                        if (s_axi_wstrb[0]) reg_mac_c[7:0] <= s_axi_wdata[7:0];
+                        if (OUT_WIDTH > 8) begin
+                            if (s_axi_wstrb[1]) reg_mac_c[OUT_WIDTH-1:8] <= s_axi_wdata[OUT_WIDTH-1:8];
+                        end
                     end
                     ADDR_MAC_CTRL: begin
                         if (s_axi_wstrb[0]) reg_mac_start <= s_axi_wdata[0];
                     end
                     ADDR_MAC_CONFIG: begin
-                        if (s_axi_wstrb[0]) reg_anomaly_threshold[7:0]           <= s_axi_wdata[7:0];
-                        if (s_axi_wstrb[1]) reg_anomaly_threshold[OUT_WIDTH-1:8] <= s_axi_wdata[OUT_WIDTH-1:8];
+                        if (s_axi_wstrb[0]) reg_anomaly_threshold[7:0] <= s_axi_wdata[7:0];
+                        if (OUT_WIDTH > 8) begin
+                            if (s_axi_wstrb[1]) reg_anomaly_threshold[OUT_WIDTH-1:8] <= s_axi_wdata[OUT_WIDTH-1:8];
+                        end
                     end
                     default: ;
                 endcase
             end
         end
     end
-
-    //-------------------------------------------------------------------------
-    // Read Data Multiplexer
-    //-------------------------------------------------------------------------
-    reg [C_S_AXI_DATA_WIDTH-1:0] reg_data_out;
 
     wire [C_S_AXI_DATA_WIDTH-1:0] status_word = {
         {(C_S_AXI_DATA_WIDTH-3){1'b0}},
@@ -188,11 +187,6 @@ module secure_mac_axi #(
         endcase
     end
 
-    assign s_axi_rdata = reg_data_out;
-
-    //-------------------------------------------------------------------------
-    // Sticky Status Management & Interrupt Generation
-    //-------------------------------------------------------------------------
     always @(posedge aclk or negedge aresetn) begin
         if (!aresetn) begin
             status_done_sticky     <= 1'b0;
@@ -200,7 +194,6 @@ module secure_mac_axi #(
             status_rollback_sticky <= 1'b0;
         end else begin
             if (reg_mac_start) begin
-                // Reset status when new computation starts
                 status_done_sticky     <= 1'b0;
                 status_fault_sticky    <= 1'b0;
                 status_rollback_sticky <= 1'b0;
@@ -212,26 +205,44 @@ module secure_mac_axi #(
         end
     end
 
-    // Interrupt line triggers on fault
     assign irq = mac_core_fault | status_fault_sticky;
 
-    //-------------------------------------------------------------------------
-    // Instantiate Verified Secure MAC Core
-    //-------------------------------------------------------------------------
     secure_mac #(
         .IN_WIDTH          (IN_WIDTH),
         .OUT_WIDTH         (OUT_WIDTH)
     ) u_secure_mac_core (
         .clk               (aclk),
         .rst_n             (aresetn),
+        .test_mode         (1'b0),
         .a                 (reg_mac_a),
         .b                 (reg_mac_b),
         .c                 (reg_mac_c),
         .start             (reg_mac_start),
+        .context_reset     (1'b0),
+        .alpha_sel         (1'b1),
         .out               (mac_core_out),
         .fault_detected    (mac_core_fault),
         .valid             (mac_core_valid),
         .rollback          (mac_core_rollback)
     );
+
+`ifndef SYNTHESIS
+    secure_mac_axi_sva u_axi_sva (
+        .aclk          (aclk),
+        .aresetn       (aresetn),
+        .s_axi_awvalid (s_axi_awvalid),
+        .s_axi_awready (s_axi_awready),
+        .s_axi_wvalid  (s_axi_wvalid),
+        .s_axi_wready  (s_axi_wready),
+        .s_axi_bvalid  (s_axi_bvalid),
+        .s_axi_bready  (s_axi_bready),
+        .s_axi_bresp   (s_axi_bresp),
+        .s_axi_arvalid (s_axi_arvalid),
+        .s_axi_arready (s_axi_arready),
+        .s_axi_rvalid  (s_axi_rvalid),
+        .s_axi_rready  (s_axi_rready),
+        .s_axi_rresp   (s_axi_rresp)
+    );
+`endif
 
 endmodule

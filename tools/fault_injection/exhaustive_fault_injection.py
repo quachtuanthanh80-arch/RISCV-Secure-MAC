@@ -617,37 +617,51 @@ def run_adaptive_vs_static_comparison(vectors, reports_dir):
         fdr_results[m] = {"fdr": fdr, "sdc": sdc}
         print(f"  Mode '{m.upper()}': FDR = {fdr:.2f}%, SDC = {sdc:.2f}%")
 
-    # Figure 1: Bar Chart Comparison
+    # Figure 1: Bar Chart Comparison (FDR & SDC Elimination)
     plt.rcParams.update({
         "font.family": "sans-serif",
-        "font.sans-serif": ["DejaVu Sans", "Arial"],
+        "font.sans-serif": ["Segoe UI", "DejaVu Sans", "Arial"],
         "font.size": 10.5,
         "axes.grid": True,
         "grid.alpha": 0.25,
         "grid.linestyle": "--"
     })
 
-    fig, ax = plt.subplots(figsize=(7.5, 4.6), dpi=300)
-    cats = ["Raw Modulo-3\nResidue Code", "Residue Code +\nStatic Bound", "Residue Code +\nAdaptive EWMA (Ours)"]
+    fig, ax = plt.subplots(figsize=(8.8, 5.4), dpi=300)
+    cats = [
+        "1. Mã Modulo-3\nThuần túy",
+        "2. Modulo-3 +\nBẫy Ngưỡng Tĩnh",
+        "3. Modulo-3 +\nEWMA Thích nghi (Ours)"
+    ]
     fdr_vals = [fdr_results["raw"]["fdr"], fdr_results["static"]["fdr"], fdr_results["adaptive"]["fdr"]]
-    colors = ['#757575', '#1976d2', '#2e7d32']
+    sdc_vals = [100.0 - v for v in fdr_vals]
+    colors = ['#546e7a', '#1976d2', '#2e7d32']
 
-    bars = ax.bar(cats, fdr_vals, color=colors, edgecolor='#212121', width=0.45, alpha=0.9)
-    ax.set_ylabel("Double-Bit Fault Detection Rate FDR (%)", fontweight="bold", labelpad=8)
-    ax.set_ylim(0, 115)
-    ax.set_title("MBU Resilience Gain: Static vs Adaptive Anomaly Detection", fontweight="bold", pad=12)
+    bars = ax.bar(cats, fdr_vals, color=colors, edgecolor='#212121', width=0.46, alpha=0.92, label='Tỷ lệ Phát hiện Lỗi MBU (FDR %)')
+    ax.set_ylabel("Tỷ lệ Phát hiện Lỗi MBU (FDR %)", fontweight="bold", labelpad=8)
+    ax.set_ylim(0, 152)
+    ax.set_title("Nâng cao Tỷ lệ Phát hiện Lỗi MBU: Cơ chế Thích ứng EWMA so với Kiểm tra Tĩnh",
+                 fontweight="bold", pad=14, fontsize=11.5)
 
-    for bar, val in zip(bars, fdr_vals):
+    for bar, val, sdc in zip(bars, fdr_vals, sdc_vals):
         h = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width() / 2.0, h + 2.0, f"{val:.2f}%",
-                ha='center', va='bottom', fontsize=10.5, fontweight='bold')
+        ax.text(bar.get_x() + bar.get_width() / 2.0, h + 2.5, f"FDR: {val:.2f}%\nSDC: {sdc:.2f}%",
+                ha='center', va='bottom', fontsize=9.0, fontweight='bold', color='#1a237e')
 
-    # Improvement annotation
-    gain = fdr_results["adaptive"]["fdr"] - fdr_results["static"]["fdr"]
-    ax.annotate(f"+{gain:.1f}% MBU Coverage Gain",
-                xy=(2, fdr_results["adaptive"]["fdr"]), xytext=(1.4, 102),
-                arrowprops=dict(arrowstyle="->", color="#b71c1c", lw=1.8),
-                fontsize=10.5, fontweight="bold", color="#b71c1c")
+    # Add Non-overlapping Delta Badges with generous headroom
+    gain_static = fdr_vals[1] - fdr_vals[0]
+    gain_adaptive_raw = fdr_vals[2] - fdr_vals[0]
+    gain_adaptive_static = fdr_vals[2] - fdr_vals[1]
+
+    # Delta badge for Static Check
+    ax.text(1.0, 122.0, f"$\\Delta = +{gain_static:.2f}\\%$ (vs Thuần túy)", ha='center', va='bottom',
+            fontsize=8.5, fontweight='bold', color='#0d47a1',
+            bbox=dict(boxstyle="round,pad=0.3", fc="#e3f2fd", ec="#90caf9", lw=1.1))
+
+    # Delta badge for Adaptive EWMA
+    ax.text(2.0, 122.0, f"$\\Delta = +{gain_adaptive_raw:.2f}\\%$ (vs Thuần túy)\n$\\Delta = +{gain_adaptive_static:.2f}\\%$ (vs Bẫy tĩnh)",
+            ha='center', va='bottom', fontsize=8.5, fontweight='bold', color='#1b5e20',
+            bbox=dict(boxstyle="round,pad=0.3", fc="#e8f5e9", ec="#a5d6a7", lw=1.2))
 
     fig.tight_layout()
     out_bar = figures_dir / "fig_ml_fdr_static_vs_adaptive.png"
@@ -656,7 +670,7 @@ def run_adaptive_vs_static_comparison(vectors, reports_dir):
     print(f"[+] Saved: {out_bar}")
 
     # Figure 2: EWMA Convergence & Anomaly Intercept Waveform
-    fig, ax = plt.subplots(figsize=(9.0, 4.5), dpi=300)
+    fig, ax = plt.subplots(figsize=(10.0, 5.2), dpi=300)
     tracker = HardwareEWMATracker()
     data_stream = []
     mean_history = []
@@ -694,23 +708,36 @@ def run_adaptive_vs_static_comparison(vectors, reports_dir):
         thresh_history.append(t)
 
     cycles = list(range(len(data_stream)))
-    ax.plot(cycles, data_stream, color='#1565c0', label='Accumulator Value ($X_t$)', alpha=0.7, lw=1.2)
-    ax.plot(cycles, mean_history, color='#f57c00', label=r'EWMA Mean Estimate ($\mu_t$)', lw=2.0)
-    ax.plot(cycles, thresh_history, color='#c62828', linestyle='--', label=r'Dynamic Adaptive Threshold ($\tau_t = |\mu| + 3.75\text{MAD}$)', lw=2.0)
-    ax.axhline(3276700, color='#757575', linestyle=':', label='Static Heuristic Threshold (3,276,700)')
+
+    # Shaded operational phases for reader clarity
+    ax.axvspan(0, 35, color='#e3f2fd', alpha=0.45, label='Pha 1: Tải công việc 1 (~500)')
+    ax.axvspan(35, 64, color='#f1f8e9', alpha=0.45, label='Pha 2: Tải công việc 2 (~50)')
+    ax.axvspan(64, 67, color='#ffebee', alpha=0.75, label='Pha 3: Tiêm lỗi (Chu kỳ 65)')
+    ax.axvspan(67, 84, color='#f3e5f5', alpha=0.45, label='Pha 4: Rollback & Khôi phục')
+
+    ax.plot(cycles, data_stream, color='#1565c0', label='Giá trị Thanh ghi MAC ($X_t$)', alpha=0.75, lw=1.4)
+    ax.plot(cycles, mean_history, color='#f57c00', label=r'Ước lượng Kỳ vọng EWMA ($\mu_t$)', lw=2.2)
+    ax.plot(cycles, thresh_history, color='#c62828', linestyle='--', label=r'Ngưỡng Động Thích nghi ($\tau_t = |\mu_t| + 3.75 \times \mathrm{MAD}_t$)', lw=2.2)
+    ax.axhline(3276700, color='#757575', linestyle=':', label='Ngưỡng Tĩnh (3.276.700)')
 
     # Point out anomaly
-    ax.scatter([65], [18000], color='#b71c1c', s=100, zorder=5, label='Injected MSB Fault (Intercepted & Rolled Back)')
-    ax.annotate("Intercepted by EWMA\n(Slipped past static bound!)",
-                xy=(65, 18000), xytext=(45, 14000),
-                arrowprops=dict(arrowstyle="->", color="#b71c1c", lw=1.5),
-                fontsize=9.5, fontweight="bold", color="#b71c1c")
+    ax.scatter([65], [18000], color='#b71c1c', s=120, zorder=6, edgecolors='#8e0000', linewidth=1.5)
+
+    # Clean Callout Pointer
+    ax.annotate("Tiêm lỗi tại chu kỳ 65:\n$X_{65} = 18.000 > \\tau_{65} = 2.050$",
+                xy=(65, 18000), xytext=(40, 50000),
+                arrowprops=dict(arrowstyle="->", color="#b71c1c", lw=1.8),
+                fontsize=8.8, fontweight="bold", color="#b71c1c",
+                bbox=dict(boxstyle="round,pad=0.35", fc="#ffffff", ec="#c62828", lw=1.2))
 
     ax.set_yscale('log')
-    ax.set_xlabel("Clock Cycles (Inference Step $t$)", fontweight="bold", labelpad=8)
-    ax.set_ylabel("MAC Output Magnitude (Log Scale)", fontweight="bold", labelpad=8)
-    ax.set_title("Online Hardware EWMA Tracker Dynamics & Anomaly Interception", fontweight="bold", pad=12)
-    ax.legend(loc="upper right", framealpha=0.92, edgecolor="#b0bec5", fontsize=9.0)
+    ax.set_ylim(15, 9e6)
+    ax.set_xlabel("Chu kỳ Xung nhịp (Clock Cycles / Inference Step $t$)", fontweight="bold", labelpad=8)
+    ax.set_ylabel("Độ lớn Ngõ ra Bộ tích lũy (Thang Logarit)", fontweight="bold", labelpad=8)
+    ax.set_title("Quá trình Hội tụ của Bộ theo dõi EWMA và Cơ chế Bẫy Lỗi Ngưỡng Động", fontweight="bold", pad=14)
+    
+    # Place legend in two columns with small font
+    ax.legend(loc="upper right", framealpha=0.95, edgecolor="#b0bec5", fontsize=8.2, ncol=2)
 
     fig.tight_layout()
     out_conv = figures_dir / "fig_ml_ewma_convergence.png"

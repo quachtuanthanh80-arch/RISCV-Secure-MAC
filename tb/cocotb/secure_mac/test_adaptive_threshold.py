@@ -55,9 +55,10 @@ async def send_mac_op(dut, a_val, b_val, c_val):
     await cocotb.triggers.RisingEdge(dut.clk)
     await cocotb.triggers.Timer(1, unit="ns")
 
-    # Stage 2 -> Stage 3
-    await cocotb.triggers.RisingEdge(dut.clk)
-    await cocotb.triggers.Timer(1, unit="ns")
+    # Advance until valid
+    while int(dut.valid.value) == 0:
+        await cocotb.triggers.RisingEdge(dut.clk)
+        await cocotb.triggers.Timer(1, unit="ns")
 
     return int(dut.fault_detected.value), int(dut.rollback.value), to_signed(int(dut.out.value), 32)
 
@@ -155,6 +156,7 @@ def test_adaptive_threshold_runner():
 
     sources = [
         root_dir / "rtl" / "mac" / "secure_mac_sva.sv",
+        root_dir / "rtl" / "mac" / "ewma_tracker_sva.sv",
         root_dir / "rtl" / "mac" / "ewma_tracker.sv",
         root_dir / "rtl" / "mac" / "secure_mac.v",
     ]

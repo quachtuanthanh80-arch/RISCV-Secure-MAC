@@ -1,8 +1,4 @@
 `timescale 1ns/1ps
-// ============================================================
-// ALU Top - Wrapper integrating Control Unit + ALU
-// Provides a self-contained FSM/ALU block for unit testing
-// ============================================================
 module alu_top (
     input  wire        clk,
     input  wire        rst_n,
@@ -38,9 +34,6 @@ module alu_top (
     output wire [2:0]  fsm_state
 );
 
-    // =========================================================
-    // FSM states (iverilog-compatible localparam)
-    // =========================================================
     localparam [2:0] S_IDLE    = 3'b000;
     localparam [2:0] S_DECODE  = 3'b001;
     localparam [2:0] S_EXECUTE = 3'b010;
@@ -49,17 +42,14 @@ module alu_top (
 
     reg [2:0] state, next_state;
 
-    // Internal wires
     wire [31:0] alu_result_w;
     wire        zero_w, carry_w;
 
-    // Latched instruction fields
     reg [6:0]  opcode_r;
     reg [2:0]  funct3_r;
     reg [6:0]  funct7_r;
     reg [31:0] operand_a_r, operand_b_r;
 
-    // Control unit outputs (directly wired)
     wire        RegWrite_w;
     wire [1:0]  ResultSrc_w;
     wire        MemWrite_w, MemRead_w;
@@ -69,9 +59,6 @@ module alu_top (
     wire [2:0]  ImmSrc_w;
     wire        MacStart_w;
 
-    // =========================================================
-    // Control Unit instantiation
-    // =========================================================
     control_unit u_control (
         .opcode   (opcode_r),
         .funct3   (funct3_r),
@@ -89,9 +76,6 @@ module alu_top (
         .MacStart (MacStart_w)
     );
 
-    // =========================================================
-    // ALU instantiation
-    // =========================================================
     alu u_alu (
         .alu_op (ALUOp_w),
         .a      (operand_a_r),
@@ -101,9 +85,6 @@ module alu_top (
         .carry  (carry_w)
     );
 
-    // =========================================================
-    // FSM State Register
-    // =========================================================
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n)
             state <= S_IDLE;
@@ -111,9 +92,6 @@ module alu_top (
             state <= next_state;
     end
 
-    // =========================================================
-    // FSM Next State Logic
-    // =========================================================
     always @(*) begin
         next_state = state;
         case (state)
@@ -126,9 +104,7 @@ module alu_top (
         endcase
     end
 
-    // =========================================================
     // Latch inputs on IDLE->DECODE transition
-    // =========================================================
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             opcode_r    <= 7'd0;
@@ -145,9 +121,7 @@ module alu_top (
         end
     end
 
-    // =========================================================
     // Register ALU result on EXECUTE->DONE
-    // =========================================================
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             alu_result <= 32'd0;
@@ -160,9 +134,7 @@ module alu_top (
         end
     end
 
-    // =========================================================
     // Control output registration (DECODE phase)
-    // =========================================================
     always @(posedge clk or negedge rst_n) begin
         if (!rst_n) begin
             RegWrite  <= 1'b0;
@@ -191,9 +163,6 @@ module alu_top (
         end
     end
 
-    // =========================================================
-    // FSM state export
-    // =========================================================
     assign fsm_state = state;
 
 endmodule

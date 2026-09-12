@@ -75,7 +75,7 @@ module riscv_cpu (
     logic stall_IF, stall_ID, flush_ID, flush_EX;
     logic [1:0] forwardA_EX, forwardB_EX;
 
-    //--- RISC-V Privileged Architecture CSRs (Machine-Mode) ------------------
+    // RISC-V Privileged Architecture CSRs (Machine-Mode)
     localparam logic [11:0] CSR_MSTATUS = 12'h300;
     localparam logic [11:0] CSR_MIE     = 12'h304;
     localparam logic [11:0] CSR_MTVEC   = 12'h305;
@@ -148,12 +148,17 @@ module riscv_cpu (
                     CSR_MTVEC: begin
                         if (is_csrrw) csr_mtvec <= rs1_data_ID;
                         else if (is_csrrs) csr_mtvec <= csr_mtvec | rs1_data_ID;
+                        else if (is_csrrc) csr_mtvec <= csr_mtvec & ~rs1_data_ID;
                     end
                     CSR_MEPC: begin
                         if (is_csrrw) csr_mepc <= rs1_data_ID;
+                        else if (is_csrrs) csr_mepc <= csr_mepc | rs1_data_ID;
+                        else if (is_csrrc) csr_mepc <= csr_mepc & ~rs1_data_ID;
                     end
                     CSR_MCAUSE: begin
                         if (is_csrrw) csr_mcause <= rs1_data_ID;
+                        else if (is_csrrs) csr_mcause <= csr_mcause | rs1_data_ID;
+                        else if (is_csrrc) csr_mcause <= csr_mcause & ~rs1_data_ID;
                     end
                     default: ;
                 endcase
@@ -411,11 +416,11 @@ module riscv_cpu (
     
     assign ReadData_MEM = mem_rdata;
     
-    // Tín hiệu MAC nội bộ được set bằng 0 do khối MAC thực tế nằm ở top_module thông qua MMIO
-    assign mac_start = 1'b0;
-    assign mac_a     = 8'd0;
-    assign mac_b     = 8'd0;
-    assign mac_c     = 16'd0;
+    // Custom MAC coprocessor interface
+    assign mac_start = MacStart_ID;
+    assign mac_a     = rs1_data_ID[7:0];
+    assign mac_b     = rs2_data_ID[7:0];
+    assign mac_c     = ALUResult_MEM[15:0];
     
     // TẦNG PIPELINE: MEM/WB
     pipe_mem_wb u_pipe_mem_wb (

@@ -69,9 +69,10 @@ async def execute_mac_op(dut, a_val, b_val, c_val, fault_target=None, fault_mask
         sig = getattr(dut, fault_target)
         sig.value = int(sig.value) ^ fault_mask
 
-    # 3. Advance to Stage 3 (Output Valid & Rollback decision)
-    await RisingEdge(dut.clk)
-    await Timer(1, unit="ns")
+    # 3. Advance until output is valid (Output Valid & Rollback decision)
+    while int(dut.valid.value) == 0:
+        await RisingEdge(dut.clk)
+        await Timer(1, unit="ns")
 
     end_cycle_time = cocotb.utils.get_sim_time('ns')
     latency_cycles = int((end_cycle_time - start_cycle_time) / 10)  # Clock period = 10ns

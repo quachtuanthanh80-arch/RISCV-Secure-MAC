@@ -23,10 +23,7 @@ module hazard_unit (
     output logic       flush_EX
 );
 
-    // Logic chuyển tiếp dữ liệu (Forwarding) cho ngõ vào ALU tại tầng EX
-    // 00: Lấy từ thanh ghi (tầng ID/EX)
-    // 01: Lấy từ tầng WB (Giá trị ghi lại)
-    // 10: Lấy từ tầng MEM (Kết quả ALU)
+    // Logic chuyển tiếp (Forwarding): 00=Reg, 01=WB, 10=MEM
     always_comb begin
         if (RegWrite_MEM && (rd_addr_MEM != 5'd0) && (rd_addr_MEM == rs1_addr_EX)) begin
             forwardA_EX = 2'b10;
@@ -45,8 +42,7 @@ module hazard_unit (
         end
     end
 
-    // Phát hiện lỗi Load-Use Hazard
-    // Nếu lệnh ở EX là LOAD và nó ghi vào thanh ghi mà lệnh ở ID đang cần đọc
+    // Phát hiện Load-Use Hazard khi lệnh ở EX là LOAD ghi vào thanh ghi mà ID đang đọc
     logic load_use_hazard;
     assign load_use_hazard = MemRead_EX && (rd_addr_EX != 5'd0) && ((rd_addr_EX == rs1_addr_ID) || (rd_addr_EX == rs2_addr_ID));
 

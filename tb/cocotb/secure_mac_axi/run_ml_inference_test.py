@@ -19,8 +19,10 @@ def test_ml_inference_resilience_runner():
 
     sources = [
         root_dir / "rtl" / "mac" / "secure_mac_sva.sv",
+        root_dir / "rtl" / "mac" / "ewma_tracker_sva.sv",
         root_dir / "rtl" / "mac" / "ewma_tracker.sv",
         root_dir / "rtl" / "mac" / "secure_mac.v",
+        root_dir / "rtl" / "mac" / "secure_mac_axi_sva.sv",
         root_dir / "rtl" / "mac" / "secure_mac_axi.v",
     ]
     for src in sources:

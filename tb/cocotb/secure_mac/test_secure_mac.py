@@ -87,9 +87,10 @@ async def execute_mac_with_fault(dut, a_val, b_val, c_val, fault_target=None, fa
         bit_idx = (fault_mask & -fault_mask).bit_length() - 1
         sample_fault_injection(fault_target, bit_idx, "single_bit", True)
 
-    # 3. Advance to Stage 3 (valid = 1)
-    await RisingEdge(dut.clk)
-    await Timer(1, unit="ns")
+    # 3. Advance until output is valid (valid = 1)
+    while int(dut.valid.value) == 0:
+        await RisingEdge(dut.clk)
+        await Timer(1, unit="ns")
 
     out_val = to_signed(int(dut.out.value), 32)
     fault = int(dut.fault_detected.value)

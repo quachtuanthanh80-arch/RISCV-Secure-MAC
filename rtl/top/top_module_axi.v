@@ -1,28 +1,11 @@
 `timescale 1ns/1ps
-//=============================================================================
-// top_module_axi.v – Complete SoC Top with ARM AXI4-Lite Interconnect
-//
-// System Architecture:
-//   1. RISC-V CPU Core (RV32I 5-Stage Pipelined)
-//   2. CPU-to-AXI4-Lite Master Bridge (translates mem_* to AXI4-Lite Master)
-//   3. AXI4-Lite 1M2S Crossbar Interconnect
-//   4. Slave 0: Data RAM (dmem_axi at 0x0000_0000 - 0x0000_03FF)
-//   5. Slave 1: Fault-Tolerant Secure MAC IP (secure_mac_axi at 0x8000_0000 - 0x8000_001F)
-//
-// Compliant with ARM AMBA AXI4-Lite specification (IHI 0022E).
-//=============================================================================
 
 module top_module_axi (
     input  wire        clk,
     input  wire        rst_n,
-
-    // External Fault / Interrupt Signal
     output wire        irq
 );
 
-    //-------------------------------------------------------------------------
-    // 1. CPU Core Memory Interface Signals
-    //-------------------------------------------------------------------------
     wire [31:0] cpu_mem_addr;
     wire        cpu_mem_write;
     wire [31:0] cpu_mem_wdata;
@@ -37,9 +20,6 @@ module top_module_axi (
     wire [31:0] pc, pc_next;
     wire        mem_read;
 
-    //-------------------------------------------------------------------------
-    // 2. AXI4-Lite Master Wires (from cpu_to_axi_master to Interconnect)
-    //-------------------------------------------------------------------------
     wire [31:0] m_axi_awaddr;
     wire [2:0]  m_axi_awprot;
     wire        m_axi_awvalid;
@@ -64,9 +44,6 @@ module top_module_axi (
     wire        m_axi_rvalid;
     wire        m_axi_rready;
 
-    //-------------------------------------------------------------------------
-    // 3. AXI4-Lite Slave 0 Wires (Interconnect to Data RAM dmem_axi)
-    //-------------------------------------------------------------------------
     wire [31:0] s0_axi_awaddr;
     wire [2:0]  s0_axi_awprot;
     wire        s0_axi_awvalid;
@@ -91,9 +68,6 @@ module top_module_axi (
     wire        s0_axi_rvalid;
     wire        s0_axi_rready;
 
-    //-------------------------------------------------------------------------
-    // 4. AXI4-Lite Slave 1 Wires (Interconnect to Secure MAC secure_mac_axi)
-    //-------------------------------------------------------------------------
     wire [31:0] s1_axi_awaddr;
     wire [2:0]  s1_axi_awprot;
     wire        s1_axi_awvalid;
@@ -121,9 +95,6 @@ module top_module_axi (
     wire        mac_irq;
     assign irq = mac_irq;
 
-    //-------------------------------------------------------------------------
-    // 5. Instantiate RISC-V CPU Core
-    //-------------------------------------------------------------------------
     (* dont_touch = "true" *)
     riscv_cpu u_cpu (
         .clk            (clk),
@@ -157,9 +128,6 @@ module top_module_axi (
         .pc_next        (pc_next)
     );
 
-    //-------------------------------------------------------------------------
-    // 6. Instantiate CPU-to-AXI4-Lite Master Bridge
-    //-------------------------------------------------------------------------
     cpu_to_axi_master #(
         .C_M_AXI_ADDR_WIDTH (32),
         .C_M_AXI_DATA_WIDTH (32)
@@ -199,9 +167,6 @@ module top_module_axi (
         .m_axi_rready  (m_axi_rready)
     );
 
-    //-------------------------------------------------------------------------
-    // 7. Instantiate AXI4-Lite 1M2S Crossbar Interconnect
-    //-------------------------------------------------------------------------
     axi_interconnect_1m2s #(
         .C_AXI_ADDR_WIDTH (32),
         .C_AXI_DATA_WIDTH (32)
@@ -285,9 +250,6 @@ module top_module_axi (
         .m1_axi_rready  (s1_axi_rready)
     );
 
-    //-------------------------------------------------------------------------
-    // 8. Instantiate Data RAM with AXI4-Lite Slave Wrapper (Slave 0)
-    //-------------------------------------------------------------------------
     dmem_axi #(
         .C_S_AXI_DATA_WIDTH (32),
         .C_S_AXI_ADDR_WIDTH (32)
@@ -320,9 +282,6 @@ module top_module_axi (
         .s_axi_rready  (s0_axi_rready)
     );
 
-    //-------------------------------------------------------------------------
-    // 9. Instantiate Secure MAC with AXI4-Lite Slave Wrapper (Slave 1)
-    //-------------------------------------------------------------------------
     (* dont_touch = "true" *)
     secure_mac_axi #(
         .IN_WIDTH            (8),

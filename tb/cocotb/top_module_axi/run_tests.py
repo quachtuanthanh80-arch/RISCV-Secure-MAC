@@ -1,18 +1,11 @@
-"""
-Pytest and standalone runner for top_module_axi Cocotb tests.
-Uses cocotb_tools.runner with Icarus Verilog.
-"""
-import os
-import subprocess
-import sys
 from pathlib import Path
-from cocotb_tools.runner import get_runner, Icarus
+from cocotb_tools.runner import get_runner
 
 
 def test_top_module_axi_runner():
     """Build and run all Cocotb tests for top_module_axi."""
     test_dir = Path(__file__).resolve().parent
-    root_dir = test_dir.parent.parent.parent  # D:/NCKH
+    root_dir = test_dir.parent.parent.parent
 
     sources = [
         root_dir / "rtl" / "cpu" / "alu.sv",
@@ -33,8 +26,10 @@ def test_top_module_axi_runner():
         root_dir / "rtl" / "bus" / "cpu_to_axi_master.v",
         root_dir / "rtl" / "bus" / "axi_interconnect_1m2s.v",
         root_dir / "rtl" / "mac" / "secure_mac_sva.sv",
+        root_dir / "rtl" / "mac" / "ewma_tracker_sva.sv",
         root_dir / "rtl" / "mac" / "ewma_tracker.sv",
         root_dir / "rtl" / "mac" / "secure_mac.v",
+        root_dir / "rtl" / "mac" / "secure_mac_axi_sva.sv",
         root_dir / "rtl" / "mac" / "secure_mac_axi.v",
         root_dir / "rtl" / "top" / "top_module_axi.v",
     ]

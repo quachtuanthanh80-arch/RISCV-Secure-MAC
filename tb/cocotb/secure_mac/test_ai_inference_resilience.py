@@ -82,10 +82,10 @@ async def test_ai_neuron_inference_resilience(dut):
         await FallingEdge(dut.clk)
         dut.start.value = 0
 
-        # Wait pipeline latency (Stage 2 -> Stage 3)
-        await RisingEdge(dut.clk)
-        await RisingEdge(dut.clk)
-        await Timer(1, unit="ns")
+        # Wait until output is valid
+        while int(dut.valid.value) == 0:
+            await RisingEdge(dut.clk)
+            await Timer(1, unit="ns")
 
         accum = to_signed(int(dut.out.value), 32)
         assert accum == golden_steps[i], f"Step {i} mismatch: got {accum}, expected {golden_steps[i]}"
@@ -122,9 +122,10 @@ async def test_ai_neuron_inference_resilience(dut):
             dut.pipe_product.value = val ^ (1 << fault_bit)
             cocotb.log.info(f"  --> INJECTED SEU into pipe_product at Step {i}: 0x{val:04x} -> 0x{int(dut.pipe_product.value):04x}")
 
-        # Advance to Stage 3 (Output sampling)
-        await RisingEdge(dut.clk)
-        await Timer(1, unit="ns")
+        # Advance until output is valid (Output sampling)
+        while int(dut.valid.value) == 0:
+            await RisingEdge(dut.clk)
+            await Timer(1, unit="ns")
 
         out_val = to_signed(int(dut.out.value), 32)
         fault_flag = int(dut.fault_detected.value)

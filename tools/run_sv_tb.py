@@ -7,6 +7,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
 
 def run_cmd(cmd, cwd, desc):
     print(f"--> [SV-TB] Running: {desc}")
@@ -32,6 +37,7 @@ def main():
         "-g2012",
         "-o", str(vvp_mac),
         str(root_dir / "rtl" / "mac" / "secure_mac_sva.sv"),
+        str(root_dir / "rtl" / "mac" / "ewma_tracker_sva.sv"),
         str(root_dir / "rtl" / "mac" / "ewma_tracker.sv"),
         str(root_dir / "rtl" / "mac" / "secure_mac.v"),
         str(root_dir / "tb" / "sv_tb" / "tb_secure_mac.sv"),
@@ -59,6 +65,7 @@ def main():
         root_dir / "rtl" / "cpu" / "regfile.sv",
         root_dir / "rtl" / "cpu" / "riscv_cpu.sv",
         root_dir / "rtl" / "mac" / "secure_mac_sva.sv",
+        root_dir / "rtl" / "mac" / "ewma_tracker_sva.sv",
         root_dir / "rtl" / "mac" / "ewma_tracker.sv",
         root_dir / "rtl" / "mac" / "secure_mac.v",
         root_dir / "rtl" / "top" / "top_module.v",

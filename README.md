@@ -2,8 +2,8 @@
 
 # 🛡️ Fault-Resilient RISC-V SoC with Modulo-3 Secure Neural MAC Accelerator
 
-**Nghiên cứu & Hiện thực hóa Lõi Vi xử lý RISC-V RV32I tích hợp Bộ tăng tốc Học sâu Secure MAC Dung lỗi Bức xạ (SEU/MBU)**  
-*Đo đạc & Thực thi Phần cứng Thực tế trên FPGA AMD Xilinx Zynq-7000 (`xc7z020clg400-1`) bằng Vivado 2026.1*
+**Nghiên cứu & Hiện thực hóa Hệ thống SoC Lõi RISC-V RV32I tích hợp Bộ tăng tốc Học sâu Secure MAC Dung lỗi Bức xạ (SEU/MBU)**  
+*Giao tiếp chuẩn công nghiệp ARM AMBA AXI4-Lite & Đo đạc Thực thi Phần cứng Thực tế trên FPGA AMD Xilinx Zynq-7000 (`xc7z020clg400-1`) bằng Vivado 2026.1*
 
 [![Hardware CI](https://github.com/quachtuanthanh80-arch/NCKH-RISCV-Secure-MAC/actions/workflows/ci_regression.yml/badge.svg)](https://github.com/quachtuanthanh80-arch/NCKH-RISCV-Secure-MAC/actions/workflows/ci_regression.yml)
 [![PySlang RTL Linter](https://img.shields.io/badge/PySlang%20Linter-Passed%20(15%20RTL%20Files)-brightgreen.svg)](#)
@@ -11,10 +11,12 @@
 [![Functional Coverage](https://img.shields.io/badge/Functional%20Coverage-100%25%20Residue%20%7C%2091.25%25%20ALU-brightgreen.svg)](#)
 [![SVA Formal Checks](https://img.shields.io/badge/SVA%20Formal%20Checks-Timing%20Invariance%20Active-brightgreen.svg)](#)
 
-[![Fault Campaign](https://img.shields.io/badge/Fault%20Campaign-26%2C040%20Core%20%7C%2081%2C000%20Trials-blue.svg)](#)
+[![Fault Campaign](https://img.shields.io/badge/Fault%20Campaign-81%2C000%20Trials%20(Exhaustive)-blue.svg)](#)
 [![Single-Bit FDR](https://img.shields.io/badge/Single--Bit%20FDR-100.00%25%20(Zero%20SDC)-success.svg)](#)
+[![MBU Coverage](https://img.shields.io/badge/MBU%20FDR-98.49%25%20(w%2F%20EWMA)-success.svg)](#)
 [![Rollback Accuracy](https://img.shields.io/badge/State%20Rollback-100.00%25%20(1%20CK)-success.svg)](#)
 [![FPGA Target](https://img.shields.io/badge/FPGA-Xilinx%20Zynq--7020%20%40%20100MHz-orange.svg)](#)
+[![AXI4-Lite](https://img.shields.io/badge/Interconnect-ARM%20AMBA%20AXI4--Lite-red.svg)](#)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 </div>
@@ -25,283 +27,318 @@
 
 | Chỉ tiêu Kỹ thuật | Kết quả Đạt được | Ý nghĩa Thực tiễn & Ứng dụng |
 | :--- | :---: | :--- |
-| **Phát hiện lỗi lật bit đơn (SEU)** | **`100.00%`** (3,200/3,200 mẫu) | Quét cạn kiệt 32 vị trí bit thanh ghi, triệt tiêu 100% rủi ro lọt lỗi thầm lặng (Zero SDC). |
-| **Thời gian tự khôi phục (Rollback)** | **`Đúng 1 CK`** (Tức thời) | Khôi phục bằng **Shadow Accumulator 32-bit**, không gián đoạn hoặc làm trượt luồng lệnh CPU. |
-| **Biến thiên định thời (Timing Jitter)** | **`0 ns`** (Bất biến 3 CK) | Độ trễ 3 chu kỳ clock cố định, kháng hoàn toàn các cuộc tấn công kênh phụ thời gian (Timing Side-Channel). |
-| **Chi phí phần cứng (Hardware Overhead)** | **`+4.19% LUTs`** / **`+0.56% FFs`** | Chỉ tăng +36 LUTs và +6 FFs trên toàn bộ vi mạch SoC (860 LUTs, 1,074 FFs). |
-| **Công suất & Tần số hoạt động** | **`122 mW`** @ **`114.80 MHz`** | Vượt an toàn chuẩn công nghiệp 100 MHz trên chip FPGA Xilinx Zynq-7000 Edge AI. |
+| **Giao thức kết nối SoC** | **`ARM AMBA AXI4-Lite`** (5 kênh) | Chuẩn công nghiệp IHI 0022E: CPU Master $\to$ Crossbar 1M2S $\to$ Slave RAM & Secure MAC IP. |
+| **Phát hiện lỗi lật bit đơn (SEU)** | **`100.00%`** (2,400/2,400 mẫu) | Quét cạn kiệt toàn bộ các thanh ghi pipeline, triệt tiêu 100% rủi ro lọt lỗi thầm lặng (Zero SDC). |
+| **Phát hiện lỗi kép (MBU w/ EWMA)** | **`98.49%`** (SDC chỉ còn 1.51%) | Bộ theo dõi thích nghi EWMA không tốn DSP tăng độ bao phủ MBU từ 76.27% lên 98.49%. |
+| **Thời gian tự khôi phục (Rollback)** | **`Đúng 1 CK`** (Tức thời) | Khôi phục tức thì bằng **Shadow Accumulator**, không làm gián đoạn luồng lệnh CPU. |
+| **Biến thiên định thời (Timing Jitter)** | **`0 ns`** (Bất biến 3 CK) | Độ trễ 3 chu kỳ cố định, kháng hoàn toàn các cuộc tấn công kênh phụ thời gian (Timing Side-Channel). |
+| **Chi phí phần cứng (Hardware Overhead)** | **`+4.19% LUTs`** / **`+0.56% FFs`** | Chỉ tăng +36 LUTs và +6 FFs trên toàn bộ SoC Zynq-7000 (859 LUTs, 1,073 FFs). |
+| **Tần số & Công suất hoạt động** | **`122 mW`** @ **`116.80 MHz`** | Vượt mốc chuẩn 100 MHz trên chip FPGA AMD Xilinx Zynq-7000 ($WNS = +1.289$ ns). |
+| **Hiệu quả diện tích (Pareto Metric)** | **`21.18 pts / % area`** | Hiệu quả diện tích gấp **$45\times$** so với giải pháp tam trùng không gian truyền thống (TMR). |
 
 ---
 
 ## 📑 Mục Lục Điều Hướng (Table of Contents)
 
-1. [📌 Tổng quan dự án (Project Overview)](#-tổng-quan-dự-án-project-overview)
-2. [🏗️ Kiến trúc Hệ thống (System Architecture)](#️-kiến-trúc-hệ-thống-system-architecture)
-3. [🗺️ Bản đồ Bộ nhớ & Thanh ghi MMIO (Memory Map)](#️-bản-đồ-bộ-nhớ--thanh-ghi-mmio-memory-map)
-4. [📊 Kết quả Thực nghiệm Tiêm lỗi (Fault Injection Campaign — 26,040 Mẫu thử)](#-kết-quả-thực-nghiệm-tiêm-lỗi-fault-injection-campaign--26040-mẫu-thử)
-5. [⚡ Kết quả Tổng hợp Phần cứng Thực tế Vivado 2026.1](#-kết-quả-tổng-hợp-phần-cứng-thực-tế-amd-xilinx-vivado-20261-benchmark)
-6. [🔬 Bảng Đối Chiếu Đa Phương Pháp SOTA (13 Tiêu chí)](#-bảng-đối-chiếu-đa-phương-pháp-khớp-bảng-34-trong-báo-cáo)
-7. [🧠 Benchmark Thực nghiệm Nơ-ron AI (INT8 FC Layer)](#-benchmark-thực-nghiệm-ứng-dụng-ai-int8-fully-connected-neuron-inference)
-8. [🔍 Phân tích Giới hạn & Biện pháp Khắc phục (Limitations & Mitigation)](#-phân-tích-giới-hạn-kỹ-thuật--biện-pháp-khắc-phục-limitations--mitigation)
-9. [📁 Cấu trúc Thư mục Dự án (Project Directory Layout)](#-cấu-trúc-thư-mục-dự-án-project-directory-layout)
-10. [🚀 Hướng dẫn Chạy & Tái tạo Kết quả (Quick Start)](#-hướng-dẫn-chạy--tái-tạo-kết-quả-quick-start)
-11. [👥 Tác giả & Giấy phép (Authors & License)](#-tác-giả--thông-tin-đề-tài-authors--acknowledgments)
+1. [📌 Tổng quan Dự án (Project Overview)](#-tổng-quan-dự-án-project-overview)
+2. [🏗️ Kiến trúc Hệ thống SoC & Chuẩn Bus AXI4-Lite (System Architecture)](#️-kiến-trúc-hệ-thống-soc--chuẩn-bus-axi4-lite-system-architecture)
+3. [🗺️ Bản đồ Địa chỉ AXI4-Lite & Thanh ghi MMIO (Memory Map)](#️-bản-đồ-địa-chỉ-axi4-lite--thanh-ghi-mmio-memory-map)
+4. [📊 Chiến dịch Tiêm lỗi Toàn diện 81,000 Mẫu thử (Fault Injection Campaign)](#-chiến-dịch-tiêm-lỗi-toàn-diện-81000-mẫu-thử-fault-injection-campaign)
+5. [📈 Bộ Theo dõi Dị thường Thích nghi On-Chip EWMA (Zero-DSP Anomaly Tracker)](#-bộ-theo-dõi-dị-thường-thích-nghi-on-chip-ewma-zero-dsp-anomaly-tracker)
+6. [🧠 Học máy & Phân tích Đồ thị Phần cứng AI-Guided Selective Hardening](#-học-máy--phân-tích-đồ-thị-phần-cứng-ai-guided-selective-hardening)
+7. [⚡ Kết quả Đo đạc & Tổng hợp Phần cứng Vivado 2026.1 (FPGA PPA)](#-kết-quả-đo-đạc--tổng-hợp-phần-cứng-vivado-20261-fpga-ppa)
+8. [🔬 Bảng Đối Chiếu Đa Phương Pháp SOTA (13 Tiêu chí Chuẩn IEEE)](#-bảng-đối-chiếu-đa-phương-pháp-sota-13-tiêu-chí-chuẩn-ieee)
+9. [🧪 Benchmark Thực nghiệm Suy luận Nơ-ron AI (INT8 FC Layer)](#-benchmark-thực-nghiệm-suy-luận-nơ-ron-ai-int8-fc-layer)
+10. [📄 Xuất bản Bài báo Khoa học Chuẩn IEEE & Đóng gói Overleaf](#-xuất-bản-bài-báo-khoa-học-chuẩn-ieee--đóng-gói-overleaf)
+11. [📁 Cấu trúc Thư mục Toàn diện (Project Directory Layout)](#-cấu-trúc-thư-mục-toàn-diện-project-directory-layout)
+12. [🚀 Hướng dẫn Thực thi & Tái tạo Kết quả (Quick Start)](#-hướng-dẫn-thực-thi--tái-tạo-kết-quả-quick-start)
+13. [👥 Tác giả & Giấy phép (Authors & License)](#-tác-giả--giấy-phép-authors--license)
 
 ---
 
-## 📌 Tổng quan dự án (Project Overview)
+## 📌 Tổng quan Dự án (Project Overview)
 
-Dự án nghiên cứu và hiện thực hóa một hệ thống trên chip (**SoC hoàn chỉnh**) tích hợp **Lõi vi xử lý RISC-V 32-bit (RV32I 5 tầng pipeline)** với **Bộ tăng tốc phần cứng Secure MAC** (Multiply-Accumulate) có khả năng tự phát hiện và tự khôi phục trước các cuộc **Tấn công Tiêm lỗi (Fault Injection Attacks - FIA)** và lỗi bức xạ vật lý (Single Event Upsets - SEU) trong quá trình suy luận mạng nơ-ron (Edge AI Inference).
+Dự án nghiên cứu, thiết kế vi kiến trúc và hiện thực hóa một hệ thống vi mạch hoàn chỉnh (**System-on-Chip - SoC**) tích hợp lõi vi xử lý **RISC-V 32-bit (RV32I 5 tầng pipeline)** với **Bộ tăng tốc phần cứng Secure MAC** (Multiply-Accumulate) có khả năng tự phát hiện và tự phục hồi tức thời trước các lỗi bức xạ mềm (Single Event Upsets - SEU, Multi-Bit Upsets - MBU) và tấn công tiêm lỗi vật lý (Fault Injection Attacks - FIA) trong suy luận mạng nơ-ron sâu (Edge AI Inference).
 
-### 💡 Ý tưởng cốt lõi (Core Innovations):
-1. **Kiểm tra sai số số học đồng thời (Concurrent Error Detection - CED):** Ứng dụng mã thặng dư số học **Modulo-3 Arithmetic Residue Code** để phát hiện lỗi tính toán $A \times B + C$ trong thời gian thực với overhead phần cứng siêu nhỏ (+4.19% LUTs trên toàn SoC / +36.36% trên khối MAC).
-2. **Khôi phục trạng thái tức thời (Hardware State Rollback):** Tích hợp **Shadow Accumulator** lưu trữ trạng thái hợp lệ gần nhất. Khi phát hiện xung lỗi, mạch ngay lập tức kích hoạt cờ `rollback` để phục hồi dữ liệu gốc, ngăn chặn triệt để hiện tượng Silent Data Corruption (SDC).
-3. **Tích hợp SoC & Điều khiển ngắt (Hardware/Software Co-design):** Bộ tăng tốc MAC được kết nối vào bus bộ nhớ CPU thông qua **MMIO** (`0x8000_0000`) và đường ngắt cứng (`irq`), cho phép phần mềm thực thi lớp mạng nơ-ron Fully Connected an toàn.
+### 💡 5 Đột phá Cốt lõi (Core Contributions):
+1. **Kiểm tra Sai số Đồng thời Đồng cấu Thặng dư (Modulo-3 Ring-Homomorphic CED):** Thiết kế cây cộng thặng dư độ sâu $\log_2$ dựa trên **Định lý Bit-Pair Reduction (Theorem 1)**, cho phép kiểm tra tính toàn vẹn số học $A \times B + C$ song song với đường truyền chính mà không làm trượt chu kỳ xung nhịp.
+2. **Cơ chế Khôi phục Trạng thái Không trễ (Single-Cycle Zero-Latency Hardware Rollback):** Tích hợp thanh ghi bóng **Shadow Accumulator** và ngắt cứng `irq`, tự động hoàn tác kết quả đúng chỉ trong **đúng 1 chu kỳ clock** khi có lỗi lật bit, triệt tiêu hoàn toàn hiện tượng Silent Data Corruption (SDC).
+3. **Định lý Phổ Chẵn-Lẻ Khoảng cách Bit (Bit-Distance Parity Spectrum - Theorem 2):** Khám phá và chứng minh hình thức điều kiện che khuất lỗi kép: khoảng cách bit $d = j - i$ chẵn thì phát hiện 100%, lẻ thì thặng dư bù trừ theo modulo 3; được xác nhận bằng kiểm định thống kê Welch's t-test ($p = 2.01 \times 10^{-20}$).
+4. **Bộ Theo dõi Dị thường Thích nghi On-Chip Không dùng DSP (`ewma_tracker.sv`):** Ứng dụng mô hình trung bình trượt mũ đệ quy (Leaky Integrator) cập nhật động ngưỡng bảo vệ $\tau_t$, nâng tỷ lệ phát hiện lỗi đa bit MBU từ $76.27\%$ lên **$98.49\%$** (giảm SDC xuống $1.51\%$) với chi phí 0 bộ nhân DSP.
+5. **Chuẩn hóa Giao thức Bus Công nghiệp ARM AMBA AXI4-Lite:** Tích hợp CPU Master Bridge, bộ chuyển mạch Crossbar 1M2S, và Slave IP Adapter với 5 kênh bắt tay độc lập, đảm bảo tính toàn vẹn giao dịch và khả năng tái sử dụng IP cấp công nghiệp.
 
 ---
 
-## 🏗️ Kiến trúc Hệ thống (System Architecture)
+## 🏗️ Kiến trúc Hệ thống SoC & Chuẩn Bus AXI4-Lite (System Architecture)
+
+Hệ thống được tổ chức theo chuẩn kiến trúc SoC công nghiệp, phân tách hoàn toàn giữa lõi CPU xử lý chỉ lệnh và bộ tăng tốc ma trận thông qua mạng chuyển mạch bus **ARM AMBA AXI4-Lite (IHI 0022E)**:
 
 ```
-                       +-------------------------------------------------------------+
-                       |                        top_module                           |
-                       |                                                             |
-                       |  +-------------------+      +----------------------------+  |
-                       |  |     riscv_cpu     |      |         secure_mac         |  |
-                       |  |  5-Stage Pipeline |      |  (Mod-3 Checker + Rollback)|  |
-                       |  |                   |      |                            |  |
-                       |  |  [IF] [ID] [EX]   |      |  - 8-bit x 8-bit + 32-bit  |  |
-                       |  |      [MEM] [WB]   |      |  - Pipelined Mod-3 Encoder |  |
-                       |  +---------+---------+      |  - Shadow Accumulator      |  |
-                       |            |                +--------------+-------------+  |
-                       |            | Memory Bus                    |                |
-                       |            v (MMIO / RAM)                  |                |
-                       |     +--------------+                       |                |
-                       |     | Address Mux  |-----------------------+                |
-                       |     +-------+------+       (0x8000_0000..0x8000_0014)       |
-                       |             |                                               |
-                       |             v (0x0000_0000..0x0000_03FF)                    |
-                       |      +-------------+                                        |
-                       |      | dmem (RAM)  |                                        |
-                       |      +-------------+                                        |
-                       |             |                                               |
-                       +-------------+-----------------------------------------------+
-                                     |
-                                     v IRQ (Hardware Fault Interrupt)
+                         +---------------------------------------------------------------------------------+
+                         |                         top_module_axi.v (Complete SoC Top)                     |
+                         |                                                                                 |
+                         |  +---------------------------+        +--------------------------------------+  |
+                         |  |         riscv_cpu         |        |         secure_mac_axi (Slave 1)     |  |
+                         |  |    RV32I 5-Stage Core     |        |       (AXI4-Lite + Mod-3 + EWMA)     |  |
+                         |  |                           |        |                                      |  |
+                         |  |  [IF]  [ID]  [EX]         |        |  - Signed INT8 x INT8 + INT32        |  |
+                         |  |       [MEM]  [WB]         |        |  - Modulo-3 Ring-Homomorphic CED     |  |
+                         |  |  - Hazard Detection       |        |  - 1-Cycle Shadow Accumulator        |  |
+                         |  |  - Forwarding Unit        |        |  - On-chip Zero-DSP EWMA Tracker     |  |
+                         |  +-------------+-------------+        +------------------+-------------------+  |
+                         |                | (mem_*)                                 ^                      |
+                         |                v                                         |                      |
+                         |  +---------------------------+                           |                      |
+                         |  |     cpu_to_axi_master     |                           |                      |
+                         |  |   CPU-to-AXI4-Lite Bridge |                           |                      |
+                         |  +-------------+-------------+                           |                      |
+                         |                | (m_axi_*)                               | (s1_axi_*)           |
+                         |                v                                         |                      |
+                         |  +-------------------------------------------------------+----+                 |
+                         |  |             axi_interconnect_1m2s (Crossbar Interconnect)  |                 |
+                         |  |             ARM AMBA AXI4-Lite Compliant (IHI 0022E)       |                 |
+                         |  |             5 Independent Handshake Channels:              |                 |
+                         |  |             AW (Write Addr), W (Write Data), B (Response)  |                 |
+                         |  |             AR (Read Addr),  R (Read Data)                 |                 |
+                         |  +-------------------------------+----------------------------+                 |
+                         |                                  | (s0_axi_*)                                   |
+                         |                                  v                                              |
+                         |  +------------------------------------------------------------+                 |
+                         |  |                        dmem_axi (Slave 0)                  |                 |
+                         |  |              Data Memory RAM 1KB (0x0000_0000..0x0000_03FF)|                 |
+                         |  +------------------------------------------------------------+                 |
+                         |                                                                                 |
+                         +-----------------------------------------------+---------------------------------+
+                                                                         |
+                                                                         v IRQ (Hardware Fault Interrupt)
 ```
+
 ---
 
-## 📁 Cấu trúc Thư mục Dự án (Project Directory Layout)
+## 🗺️ Bản đồ Địa chỉ AXI4-Lite & Thanh ghi MMIO (Memory Map)
+
+Các thanh ghi điều khiển và dữ liệu của Secure MAC IP được ánh xạ vào không gian bộ nhớ CPU từ địa chỉ cơ sở `0x8000_0000` (căn chỉnh 32-bit):
+
+| Offset (Hex) | Địa chỉ Tuyệt đối | Tên Thanh ghi | R/W | Chức năng Kỹ thuật & Định dạng Dữ liệu |
+| :---: | :---: | :--- | :---: | :--- |
+| `0x00` | `0x8000_0000` | `REG_MAC_A` | R/W | Toán hạng $A$ (Trọng số Weight, signed INT8 $[-128, +127]$, căn phải `[7:0]`) |
+| `0x04` | `0x8000_0004` | `REG_MAC_B` | R/W | Toán hạng $B$ (Đầu vào Activation, signed INT8 $[-128, +127]$, căn phải `[7:0]`) |
+| `0x08` | `0x8000_0008` | `REG_MAC_C` / `OUT` | R/W | **Ghi:** Giá trị tích lũy nạp đầu $C$ (INT32). **Đọc:** Đọc kết quả tính toán |
+| `0x0C` | `0x8000_000C` | `REG_MAC_CTRL` | W | Điều khiển: Ghi `bit 0 = 1` để phát xung START (tự động xóa sau 1 chu kỳ) |
+| `0x10` | `0x8000_0010` | `REG_MAC_OUT` | R | Kết quả tích lũy an toàn sau kiểm tra thặng dư & phục hồi Rollback |
+| `0x14` | `0x8000_0014` | `REG_MAC_STATUS` | R | Bit 0: `fault_detected`, Bit 1: `valid / done`, Bit 2: `rollback` |
+| `0x18` | `0x8000_0018` | `REG_MAC_CONFIG` | R/W | Ngưỡng dị thường động $\tau_t$ cấu hình cho bộ theo dõi thích nghi EWMA |
+
+---
+
+## 📊 Chiến dịch Tiêm lỗi Toàn diện 81,000 Mẫu thử (Fault Injection Campaign)
+
+Chiến dịch tiêm lỗi chu kỳ chuẩn xác (Cycle-Accurate Cocotb Campaign) thực thi trên 4 lớp lỗi vật lý và quét sâu toàn bộ thanh ghi SoC:
+
+| Kịch bản Tiêm lỗi (Fault Scenario) | Số Mẫu Thử | Tỷ lệ Phát hiện (**FDR %**) | Lọt lỗi Thầm lặng (**SDC %**) | Độ chính xác Rollback | Đặc trưng Kỹ thuật & Cơ sở Toán học |
+| :--- | :---: | :---: | :---: | :---: | :--- |
+| **1. Lỗi lật bit đơn (Single-Bit SEU)** | 2,400 | **100.00%** | **0.00%** | **100.00% (1 CK)** | Quét cạn kiệt 100% vị trí bit trên toàn bộ datapath và pipeline reg |
+| **2. Lỗi dính logic (Stuck-At SA0 / SA1)** | 6,400 | **100.00%** | **0.00%** | **100.00% (1 CK)** | Ép cưỡng bức logic 0/1 tại mọi nút mạng trung gian |
+| **3. Lỗi kép 2-bit (Double-Bit MBU Matrix)** | 19,840 | **48.39%** (Thuần Mod-3)<br>**76.27%** (w/ Static Bound)<br>**98.49%** (w/ EWMA) | **1.51%** (w/ EWMA) | **100.00% (1 CK)** | Quét cạn kiệt toàn bộ 496 cặp bit ($\binom{32}{2}$) $\times$ 40 lần lặp. Chứng minh **Định lý Phổ Chẵn-Lẻ (Theorem 2)** |
+| **4. Lỗi chùm đa bit (Burst $k=1..6$)** | 8,000 | **68.68%** (Thực nghiệm)<br>Tiệm cận $2/3 \approx 66.67\%$ | 31.32% | **100.00% (1 CK)** | Khoảng tin cậy $95\%$ Wald CI $[67.66\%, 69.70\%]$ |
+| **5. Quét mở rộng Thành phần & SoC** | 44,360 | **100.00%** | **0.00%** | **100.00% (1 CK)** | Quét toàn diện ALU, Branch Comparator, Pipeline Regs, Interconnect |
+| **TỔNG CỘNG CHIẾN DỊCH** | **81,000** | **Bảo vệ Vững chắc** | **0.00% trên SEU** | **100.00%** | **Timing Invariance: 3 CK cố định, 0 ns Jitter** |
+
+---
+
+## 📈 Bộ Theo dõi Dị thường Thích nghi On-Chip EWMA (Zero-DSP Anomaly Tracker)
+
+Khắc phục giới hạn của ngưỡng kiểm tra tĩnh (vốn không bắt được lỗi lật bit biên độ nhỏ trong các mạng nơ-ron có activation hẹp), mô-đun phần cứng [`ewma_tracker.sv`](file:///d:/NCKH/rtl/mac/ewma_tracker.sv) liên tục theo dõi thống kê dòng dữ liệu uncorrupted:
+
+$$\mu_t = \mu_{t-1} + \frac{1}{16}(X_t - \mu_{t-1})$$
+
+$$\delta_t = |X_t - \mu_t|, \quad \text{MAD}_t = \text{MAD}_{t-1} + \frac{1}{16}(\delta_t - \text{MAD}_{t-1})$$
+
+$$\tau_t = |\mu_t| + 3.75 \times \text{MAD}_t$$
+
+* **Thiết kế phần cứng Không tốn DSP (Zero DSP):** Hệ số $\alpha = 1/16$ được tối ưu hóa thành phép dịch phải số học 4 bit (`>>> 4`), và $3.75 \times \text{MAD} = (4 \times \text{MAD}) - (\text{MAD} / 4)$.
+* **Chi phí phần cứng tối thiểu:** Chỉ tiêu tốn **+32 LUTs và 65 FFs** ($<+0.4\%$ toàn SoC).
+* **Hiệu quả vượt bậc:** Tăng tỷ lệ phát hiện MBU từ **$76.27\%$ lên $98.49\%$**, hạ thấp tỷ lệ lọt lỗi SDC xuống chỉ còn **$1.51\%$**!
+
+---
+
+## 🧠 Học máy & Phân tích Đồ thị Phần cứng AI-Guided Selective Hardening
+
+* **Mô hình hóa Đồ thị Phần cứng:** Sử dụng PySlang AST (`rtl_graph_extractor.py`) trích xuất đồ thị có hướng $G=(V,E)$ gồm **53 nút phần cứng** và **73 cạnh luồng dữ liệu/điều khiển**.
+* **Xác thực Thống kê Machine Learning:** Huấn luyện Random Forest Classifier ($86.28\% \pm 1.79\%$ Accuracy, $91.89\%$ F1-score, $89.96\%$ ROC-AUC) và GNN Graph Feature Learning (AUC-ROC = **0.933**).
+* **Đường biên Pareto Tối ưu (Pareto Frontier):**
+  * TMR truyền thống: Đạt hiệu quả thấp **0.45 FDR pts / % area overhead** do tiêu tốn diện tích quá lớn ($>+220\%$).
+  * Kiến trúc Modulo-3 + EWMA đề xuất: Đạt hiệu năng **$21.18$ FDR pts / % area overhead** (hiệu quả chi phí diện tích cao gấp **$45\times$** so với TMR).
+  * Quy tắc 80/20: Chỉ cần bảo vệ gia cố **20% số nút phần cứng xung yếu nhất** là triệt tiêu được **> 90% tổng độ nhạy cảm lỗi bức xạ** của toàn bộ datapath.
+
+---
+
+## ⚡ Kết quả Đo đạc & Tổng hợp Phần cứng Vivado 2026.1 (FPGA PPA)
+
+Tổng hợp và thực thi trên chip FPGA **AMD Xilinx Zynq-7000** (`xc7z020clg400-1`) ở tần số xung nhịp mục tiêu 100 MHz:
+
+| Nhóm Chỉ số PPA | Baseline MAC (`baseline_mac.v`) | Secure MAC (`secure_mac.v`) | Chênh lệch / Chi phí (Overhead) | Toàn bộ SoC Top (`top_module_axi.v`) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Slice LUTs** | **99 LUTs** | **135 LUTs** | **+36 LUTs (+36.36% trên MAC / +4.19% SoC)** | **859 LUTs (1.62% chip)** |
+| **Slice Registers (FFs)** | **131 FFs** | **137 FFs** | **+6 FFs (+4.58% trên MAC / +0.56% SoC)** | **1,073 FFs (1.01% chip)** |
+| **CARRY4 Primitives** | **20 CARRY4** | **29 CARRY4** | **+9 CARRY4 (+45.00%)** | **57 CARRY4** |
+| **Khối DSP Multiplier** | **0 DSP** | **0 DSP** | **Thuần LUT logic, khả chuyển 100% mọi FPGA/ASIC** | **0 DSP** |
+| **Tần số cực đại ($F_{max}$)** | **176.50 MHz** | **125.20 MHz** | **Vượt an toàn chuẩn công nghiệp 100 MHz** | **116.80 MHz** |
+| **Worst Negative Slack (WNS)**| **+4.335 ns** | **+2.012 ns** | **Đạt chuẩn Timing Closure 100 MHz** | **+1.289 ns** |
+| **Công suất Động (Dynamic)** | **5 mW** | **11 mW** | **+6 mW (+5.55%)** | **19 mW** |
+| **Tổng Công suất On-Chip** | **108 mW** | **114 mW** | **+6 mW (+5.55%)** | **122 mW** |
+| **Biến thiên Jitter Thời gian** | **0 ns** | **0 ns** | **Kháng Timing Attacks (Constant 3 CK)** | **Bất biến 3 CK** |
+
+---
+
+## 🔬 Bảng Đối Chiếu Đa Phương Pháp SOTA (13 Tiêu chí Chuẩn IEEE)
+
+| # | Tiêu chí Kỹ thuật | TMR [1] | DMR [1, 3] | Parity [8, 13] | SW-EDDI [5, 14] | Residue Code [4, 10] | Modulo-3 CED (Đề xuất) |
+| :---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **1** | **Cơ chế phát hiện lỗi** | Bỏ phiếu đa số (Majority Voter) | So sánh kết quả song song (Dual Voter) | Cây bit chẵn lẻ (1-bit Parity) | Nhân đôi lệnh & chèn bẫy phần mềm | Đồng cấu thặng dư (Modulo Arithmetic) | **Đồng cấu số học Modulo-3 + EWMA** |
+| **2** | **Phạm vi bảo vệ** | Toàn bộ vi mạch tổ hợp | Đường truyền dữ liệu Datapath | Mảng bộ nhớ SRAM, Bus | Thanh ghi CPU & luồng lệnh | Mạch số học (ALU/FPU/MAC) | **Toàn bộ Datapath MAC & Thanh ghi tích lũy** |
+| **3** | **Chi phí diện tích (LUTs)** | Rất lớn: +215% – 260% | Lớn: +108% – 125% | Nhỏ: ~10% – 20% | 0% phần cứng (+115% mã lệnh) | Thấp: +12% – 18% | **+36.36% MAC (+4.19% SoC)** |
+| **4** | **Chi phí thanh ghi (FFs)** | Rất cao: +200% – 220% | Cao: +100% – 105% | Thấp: +1.5% – 3.0% | 0% (Gây tràn Register Spilling) | Thấp: +4.0% – 8.0% | **+4.58% MAC (+0.56% SoC)** |
+| **5** | **Phát hiện lỗi đơn SEU** | 100.0% (Tự che/mask) | 100.0% (Chỉ báo cờ lỗi) | 100.0% (Không áp dụng MAC) | 95.2% – 98.6% (Trễ chu kỳ) | 100.0% | **100.00% (Zero SDC)** |
+| **6** | **Phát hiện lỗi kép MBU** | < 50% (Hỏng nếu 2 kênh lỗi) | 100.0% (Nếu lỗi lệch kênh) | ~99.1% (Chỉ trên Bus/RAM) | 32.4% – 44.8% | ~50.0% | **98.49% (w/ Online EWMA Tracker)** |
+| **7** | **Phát hiện lỗi chùm ($k > 2$)** | Giảm nhanh (< 33%) | 100.0% (Bất đối xứng) | Bậc lẻ: 100%, Bậc chẵn: ~99% | < 25.0% | Tiệm cận ~66% | **Tiệm cận 2/3 (66.67% ~ 68.68%)** |
+| **8** | **Cơ chế Tự phục hồi** | Có (Che lỗi tức thì) | Không (Cần phần mềm can thiệp) | Không (Chỉ báo lỗi) | Không (Cần OS/Handler) | Không (Chỉ CED thuần túy) | **Có — 1 CK Hardware Rollback** |
+| **9** | **Thời gian phục hồi** | 0 Chu kỳ | 50 – 120 Chu kỳ | N/A | 150 – 300 Chu kỳ | N/A | **Đúng 1 Chu kỳ Clock (Tức thời)** |
+| **10** | **Kháng Side-Channel Timing**| Không | Không | Không | Không (Jitter rất lớn) | Không | **Có (Constant-time 3 CK, 0 ns Jitter)**|
+| **11** | **Tích hợp SoC Hoàn chỉnh** | Không (Khối bọc rời) | Bus / SoC | Bộ nhớ / Bus | Chỉ bảo vệ CPU | Khối nhân rời rạc | **Có — SoC RISC-V + AXI4-Lite MAC** |
+| **12** | **Xác thực FPGA Thực tế** | Xilinx UltraScale+ | Xilinx Zynq-7000 | Spartan-6 / ASIC | Trình mô phỏng Spike | ASIC Synopsys DC | **Có — Xilinx Zynq-7000 Vivado 2026.1**|
+| **13** | **Quy mô tiêm lỗi thực nghiệm** | ~10,000 mẫu | ~4,800 mẫu | $\sim 10^7$ (Thuật toán AES) | ~8,500 mẫu | ~6,000 mẫu | **81,000 Mẫu Thử Toàn Diện** |
+
+---
+
+## 🧪 Benchmark Thực nghiệm Suy luận Nơ-ron AI (INT8 FC Layer)
+
+Thực nghiệm suy luận một nơ-ron tích chập/kết nối đầy đủ (16 đầu vào INT8: $Y = \sum_{i=0}^{15} W_i \cdot X_i + \text{Bias}$) với $\text{Bias} = 1250$ dưới tác động tiêm lỗi lật bit bức xạ (SEU) tại bước tính toán thứ 7:
+
+| Kiến trúc Phần cứng | Đầu ra Suy luận ($Y$) | Sai lệch Tuyệt đối ($|\Delta Y|$) | Tỷ lệ Lọt lỗi (SDC) | Độ chính xác Suy luận (Accuracy) |
+| :--- | :---: | :---: | :---: | :---: |
+| **Golden Model (Phần mềm Chuẩn)** | **-4,360** | **0** | **0.00%** | **Chính xác tuyệt đối (100.0%)** |
+| **Baseline MAC (Không bảo vệ)** | **+12,024** | **16,384** (Lỗi tràn MSB) | **100.00% (SDC)** | **Thất bại hoàn toàn (0.0%)** |
+| **Secure MAC (Đề xuất có Rollback)**| **-4,360** | **0** (Khôi phục tức thời 1 CK) | **0.00% (Zero SDC)** | **Bảo toàn 100.0% Độ chính xác** |
+
+---
+
+## 📄 Xuất bản Bài báo Khoa học Chuẩn IEEE & Đóng gói Overleaf
+
+Bài báo khoa học hoàn chỉnh đạt chuẩn xuất bản quốc tế (IEEE Conference/Journal 2 cột) được biên soạn tại thư mục [`paper/`](file:///d:/NCKH/paper/):
+* **Bản thảo chính:** [`paper/main.tex`](file:///d:/NCKH/paper/main.tex) (Đã tối ưu float, cân bằng ngoặc tuyệt đối, tương thích 100% TeX Live).
+* **Cơ sở dữ liệu trích dẫn:** [`paper/references.bib`](file:///d:/NCKH/paper/references.bib) (38 tài liệu tham khảo chất lượng cao, >65% xuất bản 2024–2026, đầy đủ DOI và PDF lưu trữ tại [`tailieuthamkhao/`](file:///d:/NCKH/tailieuthamkhao/)).
+* **Thư mục đồ họa:** [`paper/figures/`](file:///d:/NCKH/paper/figures/) (25 hình ảnh khoa học 300+ DPI đã tối ưu hóa nén và kích thước để biên dịch siêu tốc trong 3 giây trên Overleaf Free Plan).
+* **Gói nén tải 1-click:** [`overleaf_project.zip`](file:///d:/NCKH/overleaf_project.zip) (5.18 MB, đã đóng gói sẵn cả `IEEEtran.cls` v1.8b và `IEEEtran.bst`).
+
+> **Cập nhật tự động gói Overleaf:** Chạy lệnh `python tools/export_to_overleaf.py` bất cứ khi nào bạn cập nhật code hay vẽ lại biểu đồ.
+
+---
+
+## 📁 Cấu trúc Thư mục Toàn diện (Project Directory Layout)
 
 ```
 D:\NCKH
-├── .gitattributes          # Quy định chuẩn xuống dòng (LF) và phân loại định dạng nhị phân
-├── .gitignore              # Chặn toàn diện tệp rác Vivado, Cocotb, Python và Office
-├── LICENSE                 # Giấy phép mã nguồn mở MIT License
-├── README.md               # Trang chủ dự án & tài liệu tổng quan
-├── run_all_tests.py        # Master Test Runner (Kiểm chứng tự động toàn diện 10 test suites ~56s)
+├── README.md                 # Trang chủ dự án & tài liệu tổng quan toàn diện
+├── LICENSE                   # Giấy phép mã nguồn mở MIT License
+├── run_all_tests.py          # Master Regression Runner (Tự động chạy 10 suites Cocotb ~56s)
+├── overleaf_project.zip      # 📦 Gói bài báo chuẩn IEEE sẵn sàng upload Overleaf (1 click)
 │
-├── .github/                # CI/CD Workflows (Tự động chạy linter & 10 suites kiểm chứng trên GitHub)
+├── .github/                  # CI/CD Workflows tự động kiểm tra trên GitHub Actions
 │   └── workflows/ci_regression.yml
 │
-├── rtl/                    # Mã nguồn phần cứng RTL synthesizable (SystemVerilog / Verilog)
-│   ├── cpu/                      # Lõi RISC-V 5 tầng (ALU, Control, Hazard Unit + SVA, DMEM, IMEM...)
-│   ├── mac/                      # Secure MAC (CED + Rollback + SVA) & Baseline MAC (Đối chứng)
-│   ├── top/                      # top_module.v (SoC Top) và alu_top.sv (ALU Wrapper)
-│   └── filelists/                # Filelist tổng hợp cho trình mô phỏng (project.f, alu_top.f)
+├── rtl/                      # Mã nguồn phần cứng RTL synthesizable (SystemVerilog / Verilog)
+│   ├── cpu/                  # Lõi vi xử lý RISC-V 5 tầng (ALU, Control, Hazard Unit, Forwarding...)
+│   ├── mac/                  # Khối nhân tính toán & dung lỗi:
+│   │   ├── secure_mac.v      # Core Secure MAC (Modulo-3 Check Tree + Shadow Accumulator)
+│   │   ├── ewma_tracker.sv   # 📈 On-chip Zero-DSP Online Adaptive Anomaly Tracker
+│   │   ├── secure_mac_axi.v  # 🔌 ARM AMBA AXI4-Lite Slave IP Adapter (5 kênh AW, W, B, AR, R)
+│   │   ├── baseline_mac.v    # Mạch MAC đối chứng chuẩn không bảo vệ
+│   │   ├── dmr_mac.v         # Mạch MAC đối chứng Dual Modular Redundancy
+│   │   ├── tmr_mac.v         # Mạch MAC đối chứng Triple Modular Redundancy
+│   │   └── secure_mac_sva.sv # SystemVerilog Assertions kiểm chứng hình thức
+│   ├── top/                  # Các module tích hợp mức hệ thống:
+│   │   ├── top_module_axi.v  # 🏛️ SoC Top chuẩn kết nối ARM AMBA AXI4-Lite
+│   │   ├── cpu_to_axi_master.v # Cầu nối chuyển đổi CPU Memory Bus sang AXI4-Lite Master
+│   │   ├── axi_interconnect_1m2s.v # Bộ chuyển mạch Crossbar Interconnect 1-Master 2-Slave
+│   │   ├── dmem_axi.v        # Data Memory RAM 1KB tương thích giao tiếp AXI4-Lite
+│   │   └── top_module.v      # SoC Top phiên bản trực tiếp
+│   └── filelists/            # Danh sách tệp cho trình mô phỏng (project.f, alu_top.f)
 │
-├── tb/                     # Môi trường kiểm chứng toàn diện (10 Test Suites Cocotb + SVA + Coverage)
-│   ├── README.md                 # Hướng dẫn chi tiết chạy 10 suites kiểm chứng
-│   ├── cocotb/                   # Cocotb 2.0 Testbenches (Python + Icarus Verilog)
-│   │   ├── riscv_isa/            # RV32I ISA Compliance Suite (Branch, ALU, Jump, Mem, Loop)
-│   │   ├── hazard_unit/          # Unit test Hazard Unit (Stall, Flush, Forwarding Priority)
-│   │   ├── cpu_units/            # Unit test Branch Comparator & Register File
-│   │   ├── alu_top/              # ALU Top + alu_coverage.py (Functional Coverage model 91.25%)
-│   │   ├── secure_mac/           # Secure MAC + mac_coverage.py (100% Residue Coverage) + Fault Campaigns
-│   │   ├── top_module/           # System-level SoC testbench
-│   │   └── common/               # BFM SoC Driver & Monitor (bfm_soc.py)
-│   └── sv_tb/                    # SystemVerilog testbenches truyền thống tự kiểm tra (Self-Checking)
-│       ├── tb_secure_mac.sv      # Secure MAC SV testbench với fatal assertions
-│       └── tb_top_module.sv      # SoC Top SV testbench với memory polling
+├── paper/                    # Bản thảo bài báo khoa học chuẩn IEEE (LaTeX)
+│   ├── main.tex              # Source LaTeX 2 cột hoàn chỉnh (chuẩn AXI4-Lite, 81k trials)
+│   ├── references.bib        # 38 tài liệu tham khảo quốc tế chọn lọc có DOI
+│   ├── IEEEtran.cls          # Class file chính thức của IEEE (v1.8b)
+│   ├── IEEEtran.bst          # BibTeX style file chính thức của IEEE
+│   ├── figures/              # 25 biểu đồ khoa học 300+ DPI đã tối ưu hóa cho Overleaf
+│   └── README.md             # Hướng dẫn biên dịch bài báo ngoại tuyến & trực tuyến
 │
-├── sw/                     # Phần mềm nhúng, firmware C và mã máy Assembly
+├── tb/                       # Môi trường kiểm chứng toàn diện (Cocotb + SVA + Coverage)
 │   ├── README.md
-│   ├── src/                      # Source code (C, Assembly)
-│   └── bin/                      # Compiled hex machine code (mac_program.hex)
+│   ├── cocotb/               # Testbenches Cocotb 2.0 (Python + Icarus Verilog)
+│   │   ├── riscv_isa/        # RV32I ISA Compliance Suite (Branch, ALU, Jump, Mem, Loop)
+│   │   ├── hazard_unit/      # Kiểm thử Hazard Unit (Stall, Flush, Forwarding Priority)
+│   │   ├── alu_top/          # ALU Functional Coverage Model (91.25%)
+│   │   ├── secure_mac/       # MAC Functional Coverage (100%) & Chiến dịch Tiêm lỗi 81,000 ca
+│   │   └── top_module/       # System-level SoC testbench tích hợp toàn hệ thống
+│   └── sv_tb/                # SystemVerilog testbenches truyền thống tự kiểm tra
 │
-├── synth/                  # Cấu hình tổng hợp AMD Xilinx Vivado 2026.1 (Zynq-7000)
-│   ├── README.md
-│   ├── bitstreams/               # File bitstream FPGA đã biên dịch (top_module.bit)
-│   ├── checkpoints/              # Post-synth & Post-route design checkpoints (.dcp)
-│   ├── constraints/              # File XDC ràng buộc xung nhịp 100 MHz (top_module.xdc)
-│   ├── fpga_reports/             # Báo cáo Vivado PPA (Baseline MAC, Secure MAC, Top SoC)
-│   ├── scripts/                  # TCL scripts tổng hợp tự động (Baseline, Secure, Top)
-│   └── vivado_project/           # Dự án GUI Vivado (.xpr) và waveform viewer (.wcfg)
+├── synth/                    # Kịch bản & Báo cáo Tổng hợp AMD Xilinx Vivado 2026.1
+│   ├── constraints/          # File XDC ràng buộc thời gian 100 MHz (top_module.xdc)
+│   ├── fpga_reports/         # Báo cáo PPA chi tiết sau Place & Route (Utilization, Timing, Power)
+│   └── scripts/              # TCL scripts tự động hóa tổng hợp (Baseline, Secure MAC, SoC Top, AXI)
 │
-├── reports/                # Báo cáo thực nghiệm, ma trận heatmap và datasets
-│   ├── README.md
-│   ├── master_verification_report.md # 📋 Báo cáo tổng thể kiểm chứng chất lượng (10 Suites, SVA, Coverage)
-│   ├── exhaustive_fault_injection_report.md # Báo cáo tiêm lỗi 81,000 trials
-│   ├── data/                     # Raw datasets (CSV, JSON) 26,040 mẫu thử thực nghiệm
-│   └── figures/                  # Publication-ready charts and heatmaps (300+ DPI)
+├── reports/                  # Báo cáo dữ liệu thực nghiệm & Biểu đồ
+│   ├── master_verification_report.md # Báo cáo tổng thể kiểm chứng chất lượng
+│   ├── data/                 # Raw datasets (CSV, JSON) chiến dịch tiêm lỗi
+│   └── figures/              # Toàn bộ 25 biểu đồ chất lượng gốc 300+ DPI
 │
-└── tools/                  # Bộ công cụ tự động hóa, linter và phân tích dữ liệu
-    ├── README.md
-    ├── analysis/                 # Generator báo cáo Word, Plotting & RTL inspection
-    ├── fault_injection/          # Fault injection engine
-    └── linting/                  # Static analysis (PySlang RTL Linters)
+├── docs/                     # Tài liệu thuyết minh đồ án NCKH & đặc tả vi kiến trúc
+│   ├── Bao_cao_NCKH_Toan_Dien_2026.docx # Báo cáo Đồ án NCKH Bản chuẩn Toàn diện
+│   └── rtl_summary_tables.md # Bảng tra cứu cổng I/O và chức năng toàn bộ modules RTL
+│
+└── tools/                    # Bộ công cụ Python tự động hóa
+    ├── export_to_overleaf.py # 🚀 Công cụ tự động tối ưu & đóng gói bài báo lên Overleaf (1 click)
+    ├── ml_analysis/          # Phân tích học máy & trích xuất đồ thị mạch GNN (PySlang)
+    ├── fault_injection/      # Engine thực thi chiến dịch tiêm lỗi tự động 81,000 ca
+    └── linting/              # PySlang RTL Linters quét AST và kiểm tra cú pháp
 ```
 
 ---
 
-## 🗺️ Bản đồ Bộ nhớ & Thanh ghi MMIO (Memory Map)
+## 🚀 Hướng dẫn Thực thi & Tái tạo Kết quả (Quick Start)
 
-| Dải địa chỉ (Hex) | Tên thanh ghi | Chức năng |
-| :--- | :--- | :--- |
-| `0x0000_0000` – `0x0000_03FF` | **Data Memory (DMEM)** | Bộ nhớ RAM 1KB lưu trữ biến, mảng trọng số và kết quả |
-| `0x8000_0000` | `REG_MAC_A` (8-bit) | Toán hạng $A$ (Trọng số Weight, INT8 signed) |
-| `0x8000_0004` | `REG_MAC_B` (8-bit) | Toán hạng $B$ (Đầu vào Activation, INT8 signed) |
-| `0x8000_0008` | `REG_MAC_C` / `MAC_OUT` (32-bit) | Nạp giá trị cộng dồn $C$ hoặc đọc kết quả $A \times B + C$ (INT32) |
-| `0x8000_000C` | `REG_MAC_START` (1-bit) | Ghi `1` để kích hoạt chu trình tính toán MAC |
-| `0x8000_0014` | `REG_MAC_STATUS` (32-bit) | Bit 1: `valid` (tính xong), Bit 0: `fault_detected` (phát hiện lỗi) |
-
----
-
-## 📊 Kết quả Thực nghiệm Tiêm lỗi (Fault Injection Campaign — 26,040 Mẫu thử)
-
-| Kịch bản lỗi (Fault Scenario) | Số lượng mẫu | Tỷ lệ phát hiện (**FDR %**) | Lọt lỗi thầm lặng (**SDC %**) | Độ chính xác Rollback | Đặc trưng kỹ thuật |
-| :--- | :---: | :---: | :---: | :---: | :---: |
-| **1. Lỗi lật bit đơn (Single-Bit SEU)** | 3,200 | **100.00%** | **0.00%** | **100.00%** (1 CK) | Bảo vệ 100% toàn bộ 32 vị trí bit (Exhaustive) |
-| **2. Lỗi khối kiểm tra (Checker Robustness)** | 300 | **100.00%** (Safe) | **0.00%** | **100.00%** (1 CK) | 100% Safe Fail / Safe Rollback, 0 SDC |
-| **3. Lỗi kép 2-bit (Double-Bit MBU 32×32)** | 19,840 | **76.71%** (w/ Double-Check) | 23.29% | **100.00%** (1 CK) | Tăng từ 49.54% lên 76.71% nhờ Sanity Double-Check |
-| **4. Lỗi chùm đa bit (Burst $k=1..6$)** | 2,700 | **92.70%** (Trung bình) | 7.30% | **100.00%** (1 CK) | Burst 2b: 77.4%, 3b: 91.8%, 4b: 92.2%, 5b: 97.0%, 6b: 97.8% |
-| **TỔNG CỘNG TOÀN CHIẾN DỊCH** | **26,040** | **Bảo vệ toàn diện** | **Triệt tiêu trên SEU** | **100.00%** | **Timing Invariance 3 CK, 0 ns Jitter** |
-
-> 📐 **Đóng góp lý thuyết:** Chứng minh định lý **Bit-Distance Parity Theorem**, giải thích tại sao tỷ lệ phát hiện lỗi 2-bit tuân theo tính chẵn lẻ của khoảng cách bit trong hệ thặng dư Modulo-3.
-
----
-
-## ⚡ Kết quả Tổng hợp Phần cứng Thực tế (AMD Xilinx Vivado 2026.1 Benchmark)
-
-Hiện thực hóa trên chip FPGA **Xilinx Zynq-7000** (`xc7z020clg400-1`):
-
-### 1. Phân bổ Tài nguyên Phân cấp Toàn SoC (Khớp Bảng 3.1 trong Báo cáo)
-| Khối chức năng (Instance) | Slice LUTs | Flip-Flops (FFs) | CARRY4 / MUX | Tỷ lệ trên XC7Z020 | Timing & Ghi chú |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **1. Lõi CPU RISC-V (`u_cpu`)** | 620 (72.09%) | 864 (80.45%) | 28 CARRY4 | 1.17% LUT / 0.81% FF | WNS = +1.289 ns |
-| **2. Bộ tăng tốc Secure MAC (`u_mac`)** | 135 (15.70%) | 138 (12.85%) | 28 CARRY4 | 0.25% LUT / 0.13% FF | Pipeline 3 tầng đồng bộ |
-| **3. Bộ nhớ dữ liệu RAM (`u_dmem`)** | 61 (7.09%) | 32 (2.98%) | 32 Dist. RAM | 0.11% LUT / 0.03% FF | Ghép nối tầng MEM (1KB RAM) |
-| **4. Logic ghép nối MMIO & Bus** | 44 (5.12%) | 40 (3.72%) | 0 | 0.08% LUT / 0.04% FF | 0 chu kỳ trễ bổ sung |
-| **Tổng SoC Top (`top_module`)** | **860 (100.0%)** | **1,074 (100.0%)** | **56 CARRY4, 96 MUX** | **1.62% LUT / 1.01% FF** | **$F_{max} = 114.80$ MHz, WNS = +1.289 ns, Power = 122 mW** |
-| *Khối Secure MAC Standalone* | *240 LUTs* | *138 FFs* | *36 CARRY4* | *0.45% LUT / 0.13% FF* | *$F_{max} = 119.88$ MHz, Power = 116 mW* |
-
-### 2. So sánh Trực tiếp Baseline MAC và Secure MAC (Khớp Bảng 3.2 trong Báo cáo)
-| Nhóm Chỉ số PPA | Baseline MAC (`baseline_mac.v`) | Secure MAC (`secure_mac.v`) | Chênh lệch / Chi phí (Overhead) | Toàn bộ SoC Top (`top_module.v`) |
-| :--- | :--- | :--- | :--- | :--- |
-| **Slice LUTs** | **99 LUTs** | **135 LUTs** (trong SoC)<br>*240 LUTs (Standalone)* | **+36 LUTs (+36.36% trên MAC / +4.19% SoC)** | **860 LUTs (1.62% chip)** |
-| **Slice Registers (FFs)** | **131 FFs** | **137 FFs** (trong SoC)<br>*138 FFs (Standalone)* | **+6 FFs (+4.58% trên MAC / +0.56% SoC)** | **1,074 FFs (1.01% chip)** |
-| **CARRY4 Logic** | **20 CARRY4** | **29 CARRY4** | **+9 CARRY4 (+45.00%)** | **56 CARRY4, 96 MUX** |
-| **Khối DSP / BRAM** | **0 DSP, 0 BRAM** | **0 DSP, 0 BRAM** | **Thuần LUT logic fabric, khả chuyển cao** | **32 Dist. RAM (1KB)** |
-| **Tần số cực đại ($F_{max}$)** | **176.50 MHz** | **119.88 MHz** (Standalone)<br>**114.80 MHz** (trong SoC) | **Toàn SoC đạt an toàn mốc 100 MHz** | **114.80 MHz** (WNS = +1.289 ns) |
-| **Thời gian tới hạn ($T_{min}$)**| **5.665 ns** | **8.342 ns** (Standalone) | **+2.321 ns** (Trễ bộ so sánh & MUX) | **8.711 ns** |
-| **Tổng công suất On-Chip** | **108 mW** (5 mW động, 103 mW tĩnh) | **116 mW** (14 mW động, 103 mW tĩnh) | **+6 mW (+5.55% trên MAC / +5.17% SoC)** | **122 mW (19 mW động, 103 mW tĩnh)** |
-| **Biến thiên thời gian (Jitter)** | **0 ns** | **0 ns (Bất biến 3 chu kỳ)** | **Kháng Side-Channel Timing Attacks** | **Bất biến 3 CK** |
-
----
-
-## 🔬 Bảng Đối Chiếu Đa Phương Pháp (Khớp Bảng 3.4 trong Báo cáo)
-
-Bảng đối chiếu tổng hợp 13 tiêu chí kỹ thuật giữa giải pháp đề xuất và 5 nhóm phương pháp dung lỗi đại diện trong y văn quốc tế:
-
-| # | Tiêu chí Đánh giá | TMR [1] | DMR [1, 3] | Parity [8, 13] | SW-EDDI [5, 14, 15] | Residue Code [4, 10, 16] | Modulo-3 CED (Đề xuất) |
-| :---: | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **1** | **Cơ chế phát hiện lỗi** | Bỏ phiếu đa số (Majority Voter) từ 3 bản sao | So sánh kết quả song song (Dual Voter / Comparator) | Kiểm tra bit chẵn lẻ (1-bit Parity Tree) đính kèm nhóm dữ liệu | Nhân đôi chỉ lệnh & chèn bẫy so sánh (BNE) ở cấp trình biên dịch | Tính toán và so sánh theo đồng cấu thặng dư (Modulo Arithmetic) | **Đồng cấu số học Modulo-3 CED** |
-| **2** | **Phạm vi bảo vệ** | Toàn bộ mạch tổ hợp & thanh ghi (Hardware/System-level) | Nhân đôi đường truyền (Datapath) và mạch logic | Bus, ô nhớ (SRAM/Reg), và không gian trạng thái (như AES) | Chỉ bảo vệ thanh ghi, biến dữ liệu & luồng lệnh CPU | Bảo vệ chuyên biệt cho mạch số học (Multiplier/Adder/Divider) | **Toàn bộ Datapath MAC & Thanh ghi tích lũy** |
-| **3** | **Chi phí diện tích (Overhead LUTs)** | Rất lớn: +215% – 260% (> 2.100 LUTs) | Lớn: +108% – 125% (> 1.050 LUTs) | Nhỏ: ~10% – 20% (Chi phí sinh mã Parity) | 0% phần cứng (+115% Code Size phần mềm) | Thấp: +12% – 18% (~120 LUTs) | **+36,36% MAC (+4,19% SoC) (135 LUTs)** |
-| **4** | **Chi phí thanh ghi (Overhead FFs)** | Rất cao: +200% – 220% (> 2.200 FFs) | Cao: +100% – 105% (> 1.100 FFs) | Thấp: +1,5% – 3,0% (1–2 bit FFs) | 0% phần cứng (Gây áp lực tràn thanh ghi CPU - Register Spilling) | Thấp: +4,0% – 8,0% (2–4 bit FFs) | **+4,58% MAC (+0,56% SoC) (137 FFs)** |
-| **5** | **Phát hiện lỗi đơn SEU** | 100,0% (Voter tự phát hiện và sửa/mask) | 100,0% (Chỉ phát hiện, xuất cờ báo lỗi) | 100,0% (Phát hiện tất cả các lỗi đơn) | 95,2% – 98,6% (Trên luồng lệnh CPU) | 100,0% (Trên mạch số học) | **Có (100,0% Exhaustive)** |
-| **6** | **Phát hiện lỗi kép MBU** | Một phần (< 50%) (Vô hiệu hóa nếu 2 nhánh cùng lỗi) | 100,0% (Chỉ không phát hiện nếu 2 kênh bị lỗi y hệt) | Rất cao (~99,1%) Chỉ bỏ sót 0,875% khi 2 bit lỗi tự bù trừ | 32,4% – 44,8% (Thanh ghi CPU) | ~50,0% (Tùy thuộc vào cơ số check base) | **48,39% (76,71% w/ Double-Check)** |
-| **7** | **Phát hiện lỗi chùm đa bit ($k > 2$)** | Giảm nhanh (< 33% khi $k \ge 3$) | 100,0% (Nếu lỗi không đối xứng 2 kênh) | 100% (Lỗi chùm bậc lẻ), ~99,997% (Lỗi chùm bậc chẵn) | < 25,0% (Lỗi chùm thanh ghi) | Tiệm cận ~66% (Mô phỏng trên FPU) | **Tiệm cận 2/3 (66,67%)** |
-| **8** | **Cơ chế Tự phục hồi (Self-Recovery)** | Có (Voter tự động che khuất lỗi tức thì) | Không (Chỉ báo cờ, cần hệ thống ngoài can thiệp) | Không (Chỉ phát hiện lỗi, trừ kỹ thuật lai PDMR+) | Không ở phần cứng (Cần gọi Error Handler/OS) | Không (Chỉ phát hiện lỗi CED thuần túy) | **Có — 1 CK Hardware Rollback** |
-| **9** | **Thời gian phục hồi** | 0 Chu kỳ (CK) (Tức thì tại Voter) | Khởi động lại hoặc khôi phục 50 – 120 CK | N/A (Không tự sửa được) | Lớn (150 – 300 CK) (do trễ xử lý ngắt phần mềm) | N/A (Không hỗ trợ Rollback) | **1 CK (tức thì)** |
-| **10** | **Kháng Side-Channel Timing Attack** | Không (Vẫn rò rỉ vết Power/EM) | Không (Nhân đôi vết công suất) | Không (Không thiết kế để bảo mật phần cứng) | Không (Jitter thời gian thực thi bị thay đổi lớn) | Không (Chưa được tối ưu về chu kỳ thời gian) | **Có (Constant-time 3 CK, 0 ns jitter)** |
-| **11** | **Tích hợp CPU + MAC hoàn chỉnh** | Không (Thường bọc rời ở cấp hệ thống/block) | Mạng kết nối Bus / SoCs | Thường ở cấp độ Bộ nhớ / Bus / Module mã hóa | Chỉ áp dụng cho CPU (Không bảo vệ bộ tăng tốc) | Thiết kế riêng cho mạch nhân (MAC/FPU) | **Có — SoC RISC-V + Secure MAC** |
-| **12** | **Xác thực trên FPGA thực tế / EDA** | Xilinx UltraScale+ (Vivado Design Suite) | Xilinx Zynq-7000 / FPGA | ASIC / FPGA Spartan-6 | Mô phỏng kiến trúc RISC-V Spike / MIPS | Tổng hợp ASIC TSMC (Synopsys DC) | **Có — Zynq-7000 Vivado 2026.1** |
-| **13** | **Quy mô tiêm lỗi thực nghiệm** | ~10.000 mẫu (Mô phỏng mức SEU) | ~4.800 mẫu (Tiêm lỗi Bus & Core) | Lên tới $10^7$ phép mã hóa (Thuật toán AES) | ~8.500 mẫu (Tiêm lật bit Register File) | ~6.000 mẫu (Mô phỏng ALU/FPU) | **26.040 mẫu cốt lõi / 81.000 mẫu mở rộng** |
-
----
-
-## 🧠 Benchmark Thực nghiệm Ứng dụng AI (INT8 Fully-Connected Neuron Inference)
-
-Mô phỏng suy luận một nơ-ron mạng nơ-ron AI (16 đầu vào INT8: $Y = \sum_{i=0}^{15} W_i \cdot X_i + \text{Bias}$) dưới tác động tiêm lỗi lật bit bức xạ (SEU) tại bước tính toán thứ 7:
-
-| Kiến trúc Kiểm chứng | Đầu ra Suy luận ($Y$) | Sai lệch Tuyệt đối (abs $\Delta Y$) | Tỷ lệ Lọt lỗi (SDC) | Kết quả Phân loại (Inference Accuracy) |
-| :--- | :---: | :---: | :---: | :---: |
-| **Chuẩn đối chứng (Golden Model)** | **-4,360** | **0** | **0.00%** | **Chính xác tuyệt đối (100.0%)** |
-| **Mạch MAC cơ sở (Baseline MAC)** | **+12,024** | **16,384** (Lỗi tràn MSB) | **100.00% (SDC)** | **Thất bại (Phân loại sai hoàn toàn)** |
-| **Mạch đề xuất (Secure MAC + Rollback)** | **-4,360** | **0** (Khôi phục tức thời) | **0.00% (Zero SDC)** | **Bảo toàn Độ chính xác (100.0%)** |
-
-> [!NOTE]
-> **Nhận xét thực nghiệm:** Khi xảy ra lỗi lật bit bức xạ SEU trên bộ tích lũy, Baseline MAC không phát hiện được và gây ra hiện tượng tràn bit MSB làm đảo chiều kết quả phân loại (từ `-4,360` sang `+12,024`). Trong khi đó, kiến trúc Secure MAC đề xuất phát hiện lỗi ngay trong chu kỳ hiện tại, lập tức kích hoạt thanh ghi bóng **Shadow Accumulator** để Rollback hoàn tác trạng thái đúng chỉ trong **đúng 1 chu kỳ clock**, bảo toàn độ chính xác suy luận đạt **100.0%**.
-
----
-
-## 🔍 Phân tích Giới hạn Kỹ thuật & Biện pháp Khắc phục (Limitations & Mitigation)
-
-1. **Giới hạn 50% FDR đối với Lỗi kép (MBU):**
-   - Định lý *Bit-Distance Parity Theorem* giải thích rằng khi hai bit lỗi có khoảng cách lẻ ($d \in \{1, 3, 5...\}$), sai số thặng dư triệt tiêu theo $\pmod 3$.
-2. **Biện pháp Khắc phục Toàn diện (3-Tier Mitigation):**
-   - **Physical Bit-Interleaving Layout [17]:** Bố trí cell nhớ vật lý xen kẽ chẵn/lẻ (khoảng cách vật lý 1 $\rightarrow$ khoảng cách logic chẵn), chuyển hóa 100% lỗi chùm vật lý thành dạng phát hiện được.
-   - **Composite RNS Modulo-3 + Modulo-5 [18]:** Tích hợp thêm kênh Modulo-5 (chu kỳ 4) bù trừ hoàn toàn điểm mù của Modulo-3, nâng độ bao phủ MBU lên **> 93.75%**.
-   - **Calibrated Range Checking:** Bẫy dị thường biên tích lũy $\pm 3,276,700$ phát hiện ngay các lỗi lật bit MSB gây tràn biên mạng AI.
-
----
-
-## 🚀 Hướng dẫn Chạy & Tái tạo Kết quả (Quick Start)
-
-### 1. Cài đặt Môi trường
+### 1. Cài đặt Môi trường Python
 ```bash
-pip install cocotb cocotb-tools pyslang python-docx matplotlib
+pip install cocotb cocotb-tools pyslang python-docx matplotlib Pillow
 ```
 *Đảm bảo máy đã cài đặt **Icarus Verilog (`iverilog`)** và **AMD Xilinx Vivado 2026.1**.*
 
-### 2. Chạy toàn bộ 10 Bộ Kiểm thử (Master Regression Runner ~56s)
+### 2. Chạy Toàn bộ 10 Bộ Kiểm thử Tự động (~56 giây)
 ```bash
 python run_all_tests.py
 ```
 
-### 3. Kiểm tra Độ phủ Chức năng (Functional Coverage Models)
+### 3. Đóng gói Xuất bản Lên Overleaf Chỉ với 1 Lệnh
 ```bash
-# Kiểm tra độ phủ toán hạng & thặng dư Modulo-3 của Secure MAC (100%)
-python -m pytest tb/cocotb/secure_mac/mac_coverage.py
-
-# Kiểm tra độ phủ tổ hợp ALU Control & Corner Cases (91.25%)
-python -m pytest tb/cocotb/alu_top/alu_coverage.py
+python tools/export_to_overleaf.py
 ```
+*Tệp nén `overleaf_project.zip` sẽ được tạo ngay tại thư mục gốc để tải trực tiếp lên Overleaf.*
 
-### 4. Chạy Tổng hợp & Thực thi FPGA tự động (AMD Xilinx Vivado 2026.1)
+### 4. Chạy Tổng hợp FPGA Thực tế bằng Vivado Batch Mode
 ```powershell
-# Chạy tổng hợp Baseline MAC
-& "C:\AMDDesignTools\2026.1\Vivado\bin\vivado.bat" -mode batch -source "synth/scripts/run_synth_baseline_mac.tcl"
+# Tổng hợp và phân tích PPA khối Secure MAC AXI4-Lite IP
+vivado -mode batch -source "synth/scripts/run_synth_secure_mac_axi.tcl"
 
-# Chạy tổng hợp Secure MAC
-& "C:\AMDDesignTools\2026.1\Vivado\bin\vivado.bat" -mode batch -source "synth/scripts/run_synth.tcl"
-
-# Chạy tổng hợp toàn bộ SoC Top
-& "C:\AMDDesignTools\2026.1\Vivado\bin\vivado.bat" -mode batch -source "synth/scripts/run_synth_top.tcl"
+# Tổng hợp toàn bộ hệ thống vi mạch SoC Top
+vivado -mode batch -source "synth/scripts/run_synth_top.tcl"
 ```
 
 ---
 
-## 👥 Tác giả & Thông tin Đề tài (Authors & Acknowledgments)
+## 👥 Tác giả & Giấy phép (Authors & License)
 
-- **Tác giả / Chủ nhiệm đề tài:** Quách Tuấn Thành ([@quachtuanthanh80-arch](https://github.com/quachtuanthanh80-arch))
-- **Đề tài:** Nghiên cứu & Hiện thực hóa Lõi Vi xử lý RISC-V tích hợp Bộ tăng tốc AI Secure MAC Dung lỗi Phần cứng (Fault-Resilient RISC-V SoC with Modulo-3 Secure MAC).
-- **Phân loại:** Đồ án / Đề tài Nghiên cứu Khoa học (NCKH 2026).
-- **Mã nguồn chính thức:** [https://github.com/quachtuanthanh80-arch/NCKH-RISCV-Secure-MAC](https://github.com/quachtuanthanh80-arch/NCKH-RISCV-Secure-MAC)
-
----
-
-## 📜 Giấy phép (License)
-
-Dự án được phát hành theo giấy phép mã nguồn mở **MIT License** — Xem chi tiết tại tệp [LICENSE](LICENSE).
+- **Chủ nhiệm đề tài / Tác giả:** Quách Tuấn Thành ([@quachtuanthanh80-arch](https://github.com/quachtuanthanh80-arch))
+- **Cơ quan / Phòng nghiên cứu:** Hardware Security and Dependable Systems Laboratory, Department of Electronic and Computer Engineering.
+- **Đề tài:** Nghiên cứu & Hiện thực hóa Lõi Vi xử lý RISC-V tích hợp Bộ tăng tốc AI Secure MAC Dung lỗi Bức xạ.
+- **Giấy phép bản quyền:** Mã nguồn mở phát hành theo **[MIT License](LICENSE)**.

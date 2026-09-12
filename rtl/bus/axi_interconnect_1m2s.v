@@ -1,16 +1,4 @@
 `timescale 1ns/1ps
-//=============================================================================
-// axi_interconnect_1m2s.v – 1-Master to 2-Slave AXI4-Lite Crossbar Interconnect
-//
-// Address Mapping:
-//   - Slave 0 (m0_axi_*): Base 0x0000_0000 (Data Memory DMEM RAM, addr[31] == 0)
-//   - Slave 1 (m1_axi_*): Base 0x8000_0000 (Secure MAC Accelerator, addr[31] == 1)
-//
-// Clean combinational crossbar routing for zero-wait state operations:
-//   - 0 pipeline cycles added
-//   - Direct AXI handshaking between Master and addressed Slave
-//=============================================================================
-
 module axi_interconnect_1m2s #(
     parameter integer C_AXI_ADDR_WIDTH = 32,
     parameter integer C_AXI_DATA_WIDTH = 32
@@ -18,37 +6,27 @@ module axi_interconnect_1m2s #(
     input  wire                             aclk,
     input  wire                             aresetn,
 
-    //=========================================================================
-    // Master Port (Connects to CPU Master)
-    //=========================================================================
-    // AW
     input  wire [C_AXI_ADDR_WIDTH-1:0]      s_axi_awaddr,
     input  wire [2:0]                       s_axi_awprot,
     input  wire                             s_axi_awvalid,
     output wire                             s_axi_awready,
-    // W
     input  wire [C_AXI_DATA_WIDTH-1:0]      s_axi_wdata,
     input  wire [(C_AXI_DATA_WIDTH/8)-1:0]  s_axi_wstrb,
     input  wire                             s_axi_wvalid,
     output wire                             s_axi_wready,
-    // B
     output wire [1:0]                       s_axi_bresp,
     output wire                             s_axi_bvalid,
     input  wire                             s_axi_bready,
-    // AR
     input  wire [C_AXI_ADDR_WIDTH-1:0]      s_axi_araddr,
     input  wire [2:0]                       s_axi_arprot,
     input  wire                             s_axi_arvalid,
     output wire                             s_axi_arready,
-    // R
     output wire [C_AXI_DATA_WIDTH-1:0]      s_axi_rdata,
     output wire [1:0]                       s_axi_rresp,
     output wire                             s_axi_rvalid,
     input  wire                             s_axi_rready,
 
-    //=========================================================================
     // Slave 0 Port: Data RAM (addr[31] == 0)
-    //=========================================================================
     output wire [C_AXI_ADDR_WIDTH-1:0]      m0_axi_awaddr,
     output wire [2:0]                       m0_axi_awprot,
     output wire                             m0_axi_awvalid,
@@ -70,9 +48,7 @@ module axi_interconnect_1m2s #(
     input  wire                             m0_axi_rvalid,
     output wire                             m0_axi_rready,
 
-    //=========================================================================
     // Slave 1 Port: Secure MAC (addr[31] == 1)
-    //=========================================================================
     output wire [C_AXI_ADDR_WIDTH-1:0]      m1_axi_awaddr,
     output wire [2:0]                       m1_axi_awprot,
     output wire                             m1_axi_awvalid,
@@ -97,9 +73,7 @@ module axi_interconnect_1m2s #(
 
     localparam [1:0] AXI_RESP_DECERR = 2'b11;
 
-    // Address Decoding (Standard 16-bit prefix mapping)
-    // Slave 0: Data RAM (0x0000_0000 - 0x0000_FFFF)
-    // Slave 1: Secure MAC Accelerator (0x8000_0000 - 0x8000_FFFF)
+    // Giải mã địa chỉ ghi 16-bit prefix: 0x0000 (RAM) và 0x8000 (Secure MAC)
     wire wr_sel_s0 = (s_axi_awaddr[31:16] == 16'h0000);
     wire wr_sel_s1 = (s_axi_awaddr[31:16] == 16'h8000);
     wire wr_unmapped = ~(wr_sel_s0 | wr_sel_s1);

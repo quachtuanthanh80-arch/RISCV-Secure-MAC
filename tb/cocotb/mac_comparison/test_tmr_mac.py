@@ -76,7 +76,10 @@ async def test_tmr_mac_fault_masking(dut):
 
     # Inject bit-flip into Core 1 intermediate product
     await RisingEdge(dut.clk)
-    dut.c1_pipe_product.value = int(dut.c1_pipe_product.value) ^ 0x00FF
+    try:
+        dut.c1_pipe_product.value = int(dut.c1_pipe_product.value) ^ 0x00FF
+    except AttributeError:
+        dut.core_pipe_product[1].value = int(dut.core_pipe_product[1].value) ^ 0x00FF
     dut._log.info("[SEU FAULT INJECTION] Corrupted Core 1 intermediate product")
 
     # Wait for completion

@@ -72,7 +72,7 @@ def generate_visualizations(data_dir=None, figures_dir=None):
     X_pca = pca.fit_transform(X_scaled)
     var_ratio = pca.explained_variance_ratio_
 
-    fig, ax = plt.subplots(figsize=(8.0, 5.0), dpi=300)
+    fig, ax = plt.subplots(figsize=(9.2, 6.0), dpi=300)
     
     # Separate points by distance parity (Even: Detected, Odd: Masked/SDC)
     even_mask = (df_32["distance_parity"] == 0)
@@ -80,26 +80,49 @@ def generate_visualizations(data_dir=None, figures_dir=None):
 
     scatter_even = ax.scatter(
         X_pca[even_mask, 0], X_pca[even_mask, 1],
-        c='#1565c0', label=f'Even Stride $d$ (FDR = 100%, n={np.sum(even_mask)})',
-        alpha=0.85, edgecolors='#0d47a1', s=45, marker='o'
+        c='#1976d2', label=f'Khoảng cách chẵn ($d$ chẵn: FDR = 100.0%, n={np.sum(even_mask)})',
+        alpha=0.88, edgecolors='#0d47a1', s=48, marker='o', zorder=3
     )
     scatter_odd = ax.scatter(
         X_pca[odd_mask, 0], X_pca[odd_mask, 1],
-        c='#d32f2f', label=f'Odd Stride $d$ (SDC / Masked, n={np.sum(odd_mask)})',
-        alpha=0.85, edgecolors='#b71c1c', s=45, marker='^'
+        c='#d32f2f', label=f'Khoảng cách lẻ ($d$ lẻ: FDR = 0.0%, n={np.sum(odd_mask)})',
+        alpha=0.88, edgecolors='#b71c1c', s=48, marker='^', zorder=3
     )
 
-    # Annotate variance explained
-    ax.set_xlabel(f"Principal Component 1 ({var_ratio[0]*100:.1f}% Variance)", fontweight="bold")
-    ax.set_ylabel(f"Principal Component 2 ({var_ratio[1]*100:.1f}% Variance)", fontweight="bold")
-    ax.set_title("PCA Projection of 32-Bit Datapath Double-Bit Fault Space", fontweight="bold", pad=12)
-    ax.legend(loc="upper right", framealpha=0.95, edgecolor="#b0bec5")
+    # Set spacious limits to completely eliminate legend and text collisions
+    ax.set_xlim(-4.8, 4.8)
+    ax.set_ylim(-6.4, 4.6)
 
-    # Annotate total variance
+    # Annotate variance explained with physical datapath interpretations
+    ax.set_xlabel(
+        f"Thành phần Chính 1: PC1 ({var_ratio[0]*100:.1f}% Phương sai)",
+        fontweight="bold", labelpad=8
+    )
+    ax.set_ylabel(
+        f"Thành phần Chính 2: PC2 ({var_ratio[1]*100:.1f}% Phương sai)",
+        fontweight="bold", labelpad=8
+    )
+    ax.set_title(
+        "Phép chiếu PCA Không gian Lỗi Kép Datapath 32-Bit MAC",
+        fontweight="bold", pad=14, fontsize=12.0
+    )
+
+    # Place legend cleanly at the top-right with plenty of headroom
+    leg = ax.legend(
+        loc="upper right", framealpha=0.96, edgecolor="#90a4ae",
+        fontsize=9.5, fancybox=True
+    )
+    leg.get_frame().set_linewidth(1.0)
+
+    # Clean single-line variance badge
     total_var = np.sum(var_ratio) * 100
-    ax.text(0.03, 0.05, f"Cumulative Explained Variance: {total_var:.1f}%",
-            transform=ax.transAxes, fontsize=10,
-            bbox=dict(boxstyle="round,pad=0.3", fc="#f5f5f5", ec="#bdbdbd", lw=1))
+    ax.text(
+        0.03, 0.04,
+        f"Tổng Phương sai Giải thích: {total_var:.1f}% (PC1: {var_ratio[0]*100:.1f}% + PC2: {var_ratio[1]*100:.1f}%)",
+        transform=ax.transAxes, fontsize=9.2, fontweight="bold",
+        verticalalignment='bottom',
+        bbox=dict(boxstyle="round,pad=0.4", fc="#f8f9fa", ec="#90a4ae", lw=1.1, alpha=0.96)
+    )
 
     fig.tight_layout()
     out_pca = figures_dir / "fig_ml_pca_fault_space.png"
@@ -114,26 +137,48 @@ def generate_visualizations(data_dir=None, figures_dir=None):
     tsne = TSNE(n_components=2, perplexity=30, max_iter=1000, random_state=42)
     X_tsne = tsne.fit_transform(X_scaled)
 
-    fig, ax = plt.subplots(figsize=(8.0, 5.2), dpi=300)
+    fig, ax = plt.subplots(figsize=(9.2, 5.8), dpi=300)
 
     # Colormap by continuous FDR
     fdr_vals = df_32["fdr"].values
     scatter = ax.scatter(
         X_tsne[:, 0], X_tsne[:, 1],
         c=fdr_vals, cmap='coolwarm',
-        alpha=0.9, edgecolors='#212121', linewidths=0.5, s=50
+        alpha=0.90, edgecolors='#37474f', linewidths=0.45, s=52
     )
-    cbar = fig.colorbar(scatter, ax=ax, pad=0.02)
-    cbar.set_label("Fault Detection Rate FDR (%)", fontweight="bold", labelpad=8)
+    cbar = fig.colorbar(scatter, ax=ax, pad=0.03, shrink=0.90)
+    cbar.set_label("Tỷ lệ Phát hiện Lỗi FDR (%)", fontweight="bold", labelpad=10)
 
-    ax.set_xlabel("t-SNE Dimension 1", fontweight="bold")
-    ax.set_ylabel("t-SNE Dimension 2", fontweight="bold")
-    ax.set_title("t-SNE Manifold Representation of Double-Bit Upsets (32-Bit MAC)", fontweight="bold", pad=12)
+    ax.set_xlim(-42, 36)
+    ax.set_ylim(-48, 60)
 
-    # Highlight separable clusters
-    ax.text(0.04, 0.92, "Separation driven by Bit-Distance Parity\n(Clean segregation of Residue-Detected vs SDC)",
-            transform=ax.transAxes, fontsize=9.5, style="italic",
-            bbox=dict(boxstyle="round,pad=0.4", fc="#ffffff", ec="#cfd8dc", alpha=0.95))
+    ax.set_xlabel("Chiều t-SNE 1 (t-SNE Dimension 1)", fontweight="bold", labelpad=8)
+    ax.set_ylabel("Chiều t-SNE 2 (t-SNE Dimension 2)", fontweight="bold", labelpad=8)
+    ax.set_title(
+        "Biểu diễn Đa tạp t-SNE Không gian Lỗi Kép (Datapath 32-Bit MAC)",
+        fontweight="bold", pad=14, fontsize=12.0
+    )
+
+    # Clean cluster badges
+    ax.text(0, 52.5, "Cụm 1: Parity (Lẻ, Chẵn)\nFDR = 73.0%",
+            ha='center', va='bottom', fontsize=8.2, fontweight='bold', color='#1a237e',
+            bbox=dict(boxstyle="round,pad=0.3", fc="#e8eaf6", ec="#c5cae9", lw=0.9))
+    ax.text(2.5, 13.8, "Cụm 2: Parity (Chẵn, Lẻ)\nFDR = 73.3%",
+            ha='center', va='bottom', fontsize=8.2, fontweight='bold', color='#1a237e',
+            bbox=dict(boxstyle="round,pad=0.3", fc="#e8eaf6", ec="#c5cae9", lw=0.9))
+    ax.text(-26.0, -5.5, "Cụm 3: Parity (Chẵn, Chẵn)\nFDR = 80.3%",
+            ha='center', va='bottom', fontsize=8.2, fontweight='bold', color='#b71c1c',
+            bbox=dict(boxstyle="round,pad=0.3", fc="#ffebee", ec="#ef9a9a", lw=0.9))
+    ax.text(18.0, -17.0, "Cụm 4: Parity (Lẻ, Lẻ)\nFDR = 79.7%",
+            ha='center', va='bottom', fontsize=8.2, fontweight='bold', color='#b71c1c',
+            bbox=dict(boxstyle="round,pad=0.3", fc="#ffebee", ec="#ef9a9a", lw=0.9))
+
+    # Sleek bottom delta badge
+    ax.text(0.04, 0.05,
+            "Cấu trúc Bước nhảy Chẵn (Cụm 3 & 4): FDR = 80.0%\n"
+            r"$\Delta = +7.0\%$ so với Bước nhảy Lẻ",
+            transform=ax.transAxes, fontsize=8.6, fontweight="bold",
+            bbox=dict(boxstyle="round,pad=0.4", fc="#f8f9fa", ec="#90a4ae", lw=1.0))
 
     fig.tight_layout()
     out_tsne = figures_dir / "fig_ml_tsne_clusters.png"

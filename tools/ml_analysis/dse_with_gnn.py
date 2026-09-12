@@ -59,57 +59,103 @@ def run_dse_analysis(figures_dir=None):
         print(f"  {r['name']:<40} | SoC Overhead: {r['overhead_soc']:>5.1f}% | MBU FDR: {r['mbu_fdr']:>5.1f}% | Efficiency: {r['fdr_per_overhead']:>5.2f} pts/%")
 
     # -------------------------------------------------------------------------
-    # Plot Pareto Frontier
+    # Plot Pareto Frontier: Two-Panel Layout (Global Overview + High-Res Zoom)
     # -------------------------------------------------------------------------
-    fig, ax = plt.subplots(figsize=(9.5, 5.4), dpi=300)
+    fig, (ax_main, ax_zoom) = plt.subplots(1, 2, figsize=(13.2, 5.4), dpi=300)
 
     cat_styles = {
-        "Baseline": {"color": "#757575", "marker": "s", "size": 70},
-        "Conventional": {"color": "#b0bec5", "marker": "X", "size": 80},
-        "Spatial Redundancy": {"color": "#d32f2f", "marker": "^", "size": 100},
-        "Residue Code": {"color": "#1976d2", "marker": "D", "size": 85},
-        "Proposed (Ours)": {"color": "#2e7d32", "marker": "*", "size": 220}
+        "Baseline": {"color": "#757575", "marker": "s", "size": 80},
+        "Conventional": {"color": "#78909c", "marker": "X", "size": 95},
+        "Residue Code": {"color": "#1976d2", "marker": "D", "size": 90},
+        "Spatial Redundancy": {"color": "#c62828", "marker": "^", "size": 110},
+        "Proposed (Ours)": {"color": "#2e7d32", "marker": "*", "size": 240}
     }
 
+    # =========================================================================
+    # Left Panel: Global Design Space Overview (0 to 240% Overhead)
+    # =========================================================================
     for cat, style in cat_styles.items():
         subset = df_dse[df_dse["cat"] == cat]
-        ax.scatter(subset["overhead_soc"], subset["mbu_fdr"],
-                   color=style["color"], marker=style["marker"], s=style["size"],
-                   edgecolors='#212121', linewidths=1.0, label=cat, zorder=4)
+        ax_main.scatter(subset["overhead_soc"], subset["mbu_fdr"],
+                        color=style["color"], marker=style["marker"], s=style["size"],
+                        edgecolors='#212121', linewidths=1.0, label=cat, zorder=5)
 
-    # Pareto non-dominated curve points:
-    # Baseline (0, 0) -> Modulo-3+Adaptive (4.65, 98.49) -> AI Selective (5.55, 99.85) -> TMR (220, 100)
     pareto_x = [0.0, 4.19, 4.65, 5.55, 110.0, 220.0]
     pareto_y = [0.0, 76.27, 98.49, 99.85, 100.0, 100.0]
-    ax.plot(pareto_x, pareto_y, color='#2e7d32', linestyle='-', linewidth=2.0, alpha=0.8,
-            label='Optimal Pareto Frontier (Coverage vs Cost)', zorder=3)
-
-    # Annotate points
-    annotations = [
-        ("Unprotected (0%)", (0.0, 0.0), (5, 5)),
-        ("Linear Parity (Fails)", (2.2, 0.0), (10, -12)),
-        ("Raw Modulo-3", (4.19, 49.01), (12, 45)),
-        ("Modulo-3 + Static", (4.19, 76.27), (12, 73)),
-        ("Adaptive EWMA (Ours)", (4.65, 98.49), (14, 94)),
-        ("AI Hardening (Ours)", (5.55, 99.85), (14, 103)),
-        ("DMR (+110%)", (110.0, 100.0), (95, 90)),
-        ("Full TMR (+220%)", (220.0, 100.0), (180, 90))
-    ]
-
-    for label, (x, y), (tx, ty) in annotations:
-        ax.annotate(label, xy=(x, y), xytext=(tx, ty),
-                    arrowprops=dict(arrowstyle="->", color="#37474f", lw=1.0),
-                    fontsize=9.0, fontweight="bold", color="#263238")
+    ax_main.plot(pareto_x, pareto_y, color='#2e7d32', linestyle='-', linewidth=2.0, alpha=0.85,
+                 label='Đường biên Pareto Tối ưu', zorder=4)
 
     # Shaded Sweet Spot Area
-    ax.axvspan(0, 10, color='#e8f5e9', alpha=0.5, label='Ultra-Low Overhead Zone (< 10% SoC Area)')
+    ax_main.axvspan(0, 10, color='#e8f5e9', alpha=0.55, label='Vùng Siêu Tiết kiệm (<10% SoC)', zorder=1)
 
-    ax.set_xlabel("FPGA SoC Area Overhead (% Slice LUTs)", fontweight="bold", labelpad=8)
-    ax.set_ylabel("Multi-Bit Upset (MBU) Fault Detection Rate FDR (%)", fontweight="bold", labelpad=8)
-    ax.set_title("Pareto Tradeoff: Hardware Area Overhead vs MBU Fault Coverage", fontweight="bold", pad=12)
-    ax.set_xlim(-8, 240)
-    ax.set_ylim(-8, 115)
-    ax.legend(loc="lower right", framealpha=0.95, edgecolor="#b0bec5", fontsize=9.2)
+    # Annotations on Main Plot
+    ax_main.annotate("DMR (+110.0% Area)", xy=(110.0, 100.0), xytext=(85, 84),
+                     arrowprops=dict(arrowstyle="->", color="#37474f", lw=1.2),
+                     fontsize=9.0, fontweight="bold", color="#37474f")
+    ax_main.annotate("TMR (+220.0% Area)", xy=(220.0, 100.0), xytext=(170, 84),
+                     arrowprops=dict(arrowstyle="->", color="#37474f", lw=1.2),
+                     fontsize=9.0, fontweight="bold", color="#37474f")
+    ax_main.annotate("Secure MAC + EWMA\n(4.65% Area, 98.49% MBU)", xy=(4.65, 98.49), xytext=(22, 60),
+                     arrowprops=dict(arrowstyle="->", color="#2e7d32", lw=1.5),
+                     fontsize=9.0, fontweight="bold", color="#1b5e20",
+                     bbox=dict(boxstyle="round,pad=0.3", fc="#e8f5e9", ec="#81c784", lw=1.0))
+
+    ax_main.set_xlabel("Chi phí Diện tích Toàn SoC (% Slice LUTs)", fontweight="bold", labelpad=8)
+    ax_main.set_ylabel("Tỷ lệ Phát hiện Lỗi Đa bit MBU FDR (%)", fontweight="bold", labelpad=8)
+    ax_main.set_title("(a) Toàn cảnh Không gian Thiết kế DSE & Đánh đổi Pareto", fontweight="bold", pad=12)
+    ax_main.set_xlim(-10, 245)
+    ax_main.set_ylim(-5, 115)
+    ax_main.legend(loc="lower right", framealpha=0.95, edgecolor="#b0bec5", fontsize=8.8)
+
+    # =========================================================================
+    # Right Panel: High-Resolution Zoom of Ultra-Low Overhead Zone (0 to 8%)
+    # =========================================================================
+    zoom_subset = df_dse[df_dse["overhead_soc"] <= 8.0]
+    for cat, style in cat_styles.items():
+        sub = zoom_subset[zoom_subset["cat"] == cat]
+        if len(sub) > 0:
+            ax_zoom.scatter(sub["overhead_soc"], sub["mbu_fdr"],
+                            color=style["color"], marker=style["marker"], s=style["size"] * 1.1,
+                            edgecolors='#212121', linewidths=1.2, zorder=5)
+
+    pareto_zoom_x = [0.0, 4.19, 4.65, 5.55]
+    pareto_zoom_y = [0.0, 76.27, 98.49, 99.85]
+    ax_zoom.plot(pareto_zoom_x, pareto_zoom_y, color='#2e7d32', linestyle='-', linewidth=2.2, alpha=0.85, zorder=4)
+
+    # Clean Non-overlapping Annotations in Zoom Panel (Zero line crossings)
+    ax_zoom.annotate("Không bảo vệ\n(0.0%, 0.0%)", xy=(0.0, 0.0), xytext=(-0.3, 16),
+                     arrowprops=dict(arrowstyle="->", color="#37474f", lw=1.2),
+                     fontsize=8.5, fontweight="bold", color="#37474f")
+
+    ax_zoom.annotate("Linear Parity\n(2.2% Area, 0.0% MBU)", xy=(2.2, 0.0), xytext=(2.5, 14),
+                     arrowprops=dict(arrowstyle="->", color="#c62828", lw=1.2),
+                     fontsize=8.5, fontweight="bold", color="#c62828")
+
+    ax_zoom.annotate("Modulo-3 Thô\n(4.19%, 48.39%)", xy=(4.19, 48.39), xytext=(5.1, 46),
+                     arrowprops=dict(arrowstyle="->", color="#1976d2", lw=1.2),
+                     fontsize=8.5, fontweight="bold", color="#1565c0")
+
+    ax_zoom.annotate("Modulo-3 + Tĩnh\n(4.19%, 76.27% | $\\Delta = +27.88\\%$)", xy=(4.19, 76.27), xytext=(5.1, 72),
+                     arrowprops=dict(arrowstyle="->", color="#1976d2", lw=1.2),
+                     fontsize=8.5, fontweight="bold", color="#1565c0")
+
+    ax_zoom.annotate("Adaptive EWMA\n(4.65%, 98.49% | $\\mathbf{\\Delta = +22.22\\%}$)", xy=(4.65, 98.49), xytext=(2.6, 114),
+                     ha='center', va='bottom',
+                     arrowprops=dict(arrowstyle="->", color="#2e7d32", lw=1.4),
+                     fontsize=8.8, fontweight="bold", color="#1b5e20",
+                     bbox=dict(boxstyle="round,pad=0.25", fc="#e8f5e9", ec="#a5d6a7", lw=1.0))
+
+    ax_zoom.annotate("AI Hardening\n(5.55%, 99.85%)", xy=(5.55, 99.85), xytext=(5.9, 114),
+                     ha='center', va='bottom',
+                     arrowprops=dict(arrowstyle="->", color="#2e7d32", lw=1.4),
+                     fontsize=8.8, fontweight="bold", color="#1b5e20",
+                     bbox=dict(boxstyle="round,pad=0.25", fc="#e8f5e9", ec="#a5d6a7", lw=1.0))
+
+    ax_zoom.set_xlabel("Chi phí Diện tích Toàn SoC (% Slice LUTs)", fontweight="bold", labelpad=8)
+    ax_zoom.set_ylabel("Tỷ lệ Phát hiện Lỗi Đa bit MBU FDR (%)", fontweight="bold", labelpad=8)
+    ax_zoom.set_title("(b) Phóng to Vùng Siêu Tiết kiệm Tài nguyên (0% – 7%)", fontweight="bold", pad=12)
+    ax_zoom.set_xlim(-0.6, 8.5)
+    ax_zoom.set_ylim(-8, 132)
 
     fig.tight_layout()
     out_pareto = figures_dir / "fig_ml_pareto_frontier.png"
@@ -120,3 +166,4 @@ def run_dse_analysis(figures_dir=None):
 
 if __name__ == "__main__":
     run_dse_analysis()
+

@@ -95,8 +95,11 @@ tools/ml_analysis/plot_bit_vulnerability_bar.py
 *.tar
 *.gz
 *.pkl
+*.exe
+tools/verible/
 synth/bitstreams/
 synth/checkpoints/
 synth/fpga_reports/
 tools/ml_analysis/data/
 tools/ml_analysis/models/
+

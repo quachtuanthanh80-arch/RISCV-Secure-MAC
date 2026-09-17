@@ -5,7 +5,7 @@
 **Nghiên cứu & Hiện thực hóa Hệ thống SoC Lõi RISC-V RV32I tích hợp Bộ tăng tốc Học sâu Secure MAC Dung lỗi Bức xạ (SEU/MBU)**  
 *Giao tiếp chuẩn công nghiệp ARM AMBA AXI4-Lite & Đo đạc Thực thi Phần cứng Thực tế trên FPGA AMD Xilinx Zynq-7000 (`xc7z020clg400-1`) bằng Vivado 2026.1*
 
-[![Hardware CI](https://github.com/quachtuanthanh80-arch/NCKH-RISCV-Secure-MAC/actions/workflows/ci_regression.yml/badge.svg)](https://github.com/quachtuanthanh80-arch/NCKH-RISCV-Secure-MAC/actions/workflows/ci_regression.yml)
+[![Hardware CI](https://github.com/quachtuanthanh80-arch/RISCV-Secure-MAC/actions/workflows/ci_regression.yml/badge.svg)](https://github.com/quachtuanthanh80-arch/RISCV-Secure-MAC/actions/workflows/ci_regression.yml)
 [![PySlang RTL Linter](https://img.shields.io/badge/PySlang%20Linter-Passed%20(15%20RTL%20Files)-brightgreen.svg)](#)
 [![Cocotb Tests](https://img.shields.io/badge/Cocotb%20Tests-10%20Suites%20PASS%20(100%25)-brightgreen.svg)](#)
 [![Functional Coverage](https://img.shields.io/badge/Functional%20Coverage-100%25%20Residue%20%7C%2091.25%25%20ALU-brightgreen.svg)](#)

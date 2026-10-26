@@ -1,0 +1,34 @@
+cff-version: 1.2.0
+message: "If you use this hardware artifact, design, or research benchmark in your research, please cite it as below."
+title: "Fault-Resilient RISC-V SoC with Modulo-3 Secure Neural MAC Accelerator"
+authors:
+  - family-names: "Quach"
+    given-names: "Tuan Thanh"
+    affiliation: "Department of Electronic and Computer Engineering"
+repository-code: "https://github.com/quachtuanthanh80-arch/RISCV-Secure-MAC"
+url: "https://github.com/quachtuanthanh80-arch/RISCV-Secure-MAC"
+license: "MIT"
+keywords:
+  - "RISC-V"
+  - "Fault-Tolerant Computing"
+  - "Deep Neural Networks"
+  - "Multiply-Accumulator (MAC)"
+  - "Concurrent Error Detection (CED)"
+  - "Residue Number System"
+  - "Single-Event Upset (SEU)"
+  - "ARM AMBA AXI4-Lite"
+  - "SystemVerilog"
+  - "Cocotb"
+  - "ISO 26262 ASIL D"
+  - "Embench-IoT"
+date-released: "2026-10-27"
+type: "software"
+abstract: >-
+  An open-source, synthesizable, fault-resilient System-on-Chip (SoC) combining a 32-bit
+  RISC-V RV32I pipelined core with a specialized hardware Multiply-Accumulate (MAC)
+  accelerator for edge neural inference. Incorporates arithmetic Modulo-3 Concurrent
+  Error Detection (CED), a zero-DSP online adaptive EWMA anomaly tracker, autonomous
+  single-cycle shadow accumulator rollback, and complete ARM AMBA AXI4-Lite memory-mapped
+  interconnect compliance. Fully verified across 18 comprehensive test suites including
+  RISC-V International Architectural Certification Tests (ACT), Embench-IoT, and MLCommons
+  MLPerf Tiny.

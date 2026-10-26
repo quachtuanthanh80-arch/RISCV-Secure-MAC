@@ -71,6 +71,8 @@ scratch/
 paper/
 docs/
 tailieuthamkhao/
+tailieuthamkhao_vietnamese_authors/
+tailieuthamkhao*/
 reports/
 *.docx
 ~$*.docx
@@ -82,6 +84,14 @@ reports/
 
 # 3. Paper Generation & Manuscript Tools (Local Only)
 tools/build_13_pages_main.py
+tools/build_8_pages_main.py
+tools/sync_8pages_tex.py
+tools/finish_8pages_sync.py
+tools/verify_8pages.py
+tools/package_all_overleaf_bundles.py
+tools/sync_manuscripts_ppa.py
+tools/add_vietnamese_citations.py
+tools/download_vietnamese_arxiv.py
 tools/export_to_overleaf.py
 tools/verify_paper.py
 tools/analysis/audit_figures_data.py

@@ -55,10 +55,8 @@
 7. [⚡ Kết quả Đo đạc & Tổng hợp Phần cứng Vivado 2026.1 (FPGA PPA)](#-kết-quả-đo-đạc--tổng-hợp-phần-cứng-vivado-20261-fpga-ppa)
 8. [🔬 Bảng Đối Chiếu Đa Phương Pháp SOTA (13 Tiêu chí Chuẩn IEEE)](#-bảng-đối-chiếu-đa-phương-pháp-sota-13-tiêu-chí-chuẩn-ieee)
 9. [🧪 Benchmark Thực nghiệm Suy luận Nơ-ron AI (INT8 FC Layer)](#-benchmark-thực-nghiệm-suy-luận-nơ-ron-ai-int8-fc-layer)
-10. [📄 Xuất bản Bài báo Khoa học Chuẩn IEEE & Đóng gói Overleaf](#-xuất-bản-bài-báo-khoa-học-chuẩn-ieee--đóng-gói-overleaf)
-11. [📁 Cấu trúc Thư mục Toàn diện (Project Directory Layout)](#-cấu-trúc-thư-mục-toàn-diện-project-directory-layout)
-12. [🚀 Hướng dẫn Thực thi & Tái tạo Kết quả (Quick Start)](#-hướng-dẫn-thực-thi--tái-tạo-kết-quả-quick-start)
-13. [👥 Tác giả & Giấy phép (Authors & License)](#-tác-giả--giấy-phép-authors--license)
+10. [🚀 Hướng dẫn Thực thi & Tái tạo Kết quả (Quick Start & Artifact Reproduction)](#-hướng-dẫn-thực-thi--tái-tạo-kết-quả-quick-start--artifact-reproduction)
+11. [📚 Trích dẫn Đề tài (How to Cite)](#-trích-dẫn-đề-tài-how-to-cite)
 
 ---
 
@@ -229,90 +227,6 @@ Thực nghiệm suy luận một nơ-ron tích chập/kết nối đầy đủ (
 
 ---
 
-## 📄 Xuất bản Bài báo Khoa học Chuẩn IEEE & Đóng gói Overleaf
-
-Bài báo khoa học hoàn chỉnh đạt chuẩn xuất bản quốc tế (IEEE Conference/Journal 2 cột) được biên soạn tại thư mục [`paper/`](file:///d:/NCKH/paper/):
-* **Bản thảo chính:** [`paper/main.tex`](file:///d:/NCKH/paper/main.tex) (Đã tối ưu float, cân bằng ngoặc tuyệt đối, tương thích 100% TeX Live).
-* **Cơ sở dữ liệu trích dẫn:** [`paper/references.bib`](file:///d:/NCKH/paper/references.bib) (38 tài liệu tham khảo chất lượng cao, >65% xuất bản 2024–2026, đầy đủ DOI và PDF lưu trữ tại [`tailieuthamkhao/`](file:///d:/NCKH/tailieuthamkhao/)).
-* **Thư mục đồ họa:** [`paper/figures/`](file:///d:/NCKH/paper/figures/) (25 hình ảnh khoa học 300+ DPI đã tối ưu hóa nén và kích thước để biên dịch siêu tốc trong 3 giây trên Overleaf Free Plan).
-* **Gói nén tải 1-click:** [`overleaf_project.zip`](file:///d:/NCKH/overleaf_project.zip) (5.18 MB, đã đóng gói sẵn cả `IEEEtran.cls` v1.8b và `IEEEtran.bst`).
-
-> **Cập nhật tự động gói Overleaf:** Chạy lệnh `python tools/export_to_overleaf.py` bất cứ khi nào bạn cập nhật code hay vẽ lại biểu đồ.
-
----
-
-## 📁 Cấu trúc Thư mục Toàn diện (Project Directory Layout)
-
-```
-D:\NCKH
-├── README.md                 # Trang chủ dự án & tài liệu tổng quan toàn diện
-├── LICENSE                   # Giấy phép mã nguồn mở MIT License
-├── run_all_tests.py          # Master Regression Runner (Tự động chạy 10 suites Cocotb ~56s)
-├── overleaf_project.zip      # 📦 Gói bài báo chuẩn IEEE sẵn sàng upload Overleaf (1 click)
-│
-├── .github/                  # CI/CD Workflows tự động kiểm tra trên GitHub Actions
-│   └── workflows/ci_regression.yml
-│
-├── rtl/                      # Mã nguồn phần cứng RTL synthesizable (SystemVerilog / Verilog)
-│   ├── cpu/                  # Lõi vi xử lý RISC-V 5 tầng (ALU, Control, Hazard Unit, Forwarding...)
-│   ├── mac/                  # Khối nhân tính toán & dung lỗi:
-│   │   ├── secure_mac.v      # Core Secure MAC (Modulo-3 Check Tree + Shadow Accumulator)
-│   │   ├── ewma_tracker.sv   # 📈 On-chip Zero-DSP Online Adaptive Anomaly Tracker
-│   │   ├── secure_mac_axi.v  # 🔌 ARM AMBA AXI4-Lite Slave IP Adapter (5 kênh AW, W, B, AR, R)
-│   │   ├── baseline_mac.v    # Mạch MAC đối chứng chuẩn không bảo vệ
-│   │   ├── dmr_mac.v         # Mạch MAC đối chứng Dual Modular Redundancy
-│   │   ├── tmr_mac.v         # Mạch MAC đối chứng Triple Modular Redundancy
-│   │   └── secure_mac_sva.sv # SystemVerilog Assertions kiểm chứng hình thức
-│   ├── top/                  # Các module tích hợp mức hệ thống:
-│   │   ├── top_module_axi.v  # 🏛️ SoC Top chuẩn kết nối ARM AMBA AXI4-Lite
-│   │   ├── cpu_to_axi_master.v # Cầu nối chuyển đổi CPU Memory Bus sang AXI4-Lite Master
-│   │   ├── axi_interconnect_1m2s.v # Bộ chuyển mạch Crossbar Interconnect 1-Master 2-Slave
-│   │   ├── dmem_axi.v        # Data Memory RAM 1KB tương thích giao tiếp AXI4-Lite
-│   │   └── top_module.v      # SoC Top phiên bản trực tiếp
-│   └── filelists/            # Danh sách tệp cho trình mô phỏng (project.f, alu_top.f)
-│
-├── paper/                    # Bản thảo bài báo khoa học chuẩn IEEE (LaTeX)
-│   ├── main.tex              # Source LaTeX 2 cột hoàn chỉnh (chuẩn AXI4-Lite, 81k trials)
-│   ├── references.bib        # 38 tài liệu tham khảo quốc tế chọn lọc có DOI
-│   ├── IEEEtran.cls          # Class file chính thức của IEEE (v1.8b)
-│   ├── IEEEtran.bst          # BibTeX style file chính thức của IEEE
-│   ├── figures/              # 25 biểu đồ khoa học 300+ DPI đã tối ưu hóa cho Overleaf
-│   └── README.md             # Hướng dẫn biên dịch bài báo ngoại tuyến & trực tuyến
-│
-├── tb/                       # Môi trường kiểm chứng toàn diện (Cocotb + SVA + Coverage + Benchmarks)
-│   ├── README.md
-│   ├── cocotb/               # Testbenches Cocotb 2.1 (Python + Icarus Verilog)
-│   │   ├── benchmarks/       # 🌟 Bộ chuẩn độc lập: Embench-IoT matmult-int & RISC-V ACT Suite
-│   │   ├── riscv_isa/        # RV32I ISA Compliance Suite (Branch, ALU, Jump, Mem, Loop)
-│   │   ├── hazard_unit/      # Kiểm thử Hazard Unit (Stall, Flush, Forwarding Priority, SVA)
-│   │   ├── cpu_units/        # Kiểm thử vi mạch CPU (Branch Comparator, Regfile)
-│   │   ├── alu_top/          # ALU Functional Coverage Model (91.25%)
-│   │   ├── secure_mac/       # MAC Functional Coverage (100%), ISO 26262 ASIL D Dual-Rail & 4,400+ Trials
-│   │   ├── cpu_axi_bridge/   # Kiểm thử cô lập cầu nối CPU-to-AXI Master
-│   │   ├── secure_mac_axi/   # AXI4-Lite IP Adapter & Digits MLP AI Inference Resilience Benchmark
-│   │   ├── axi_interconnect/ # Kiểm thử bộ chuyển mạch AXI Crossbar Interconnect
-│   │   ├── top_module/       # SoC Integration mức hệ thống cơ sở
-│   │   └── top_module_axi/   # SoC Integration hoàn chỉnh qua bus AXI4-Lite
-│   └── sv_tb/                # SystemVerilog testbenches truyền thống tự kiểm tra
-│
-├── synth/                    # Kịch bản & Báo cáo Tổng hợp AMD Xilinx Vivado 2026.1
-│   ├── constraints/          # File XDC ràng buộc thời gian 100 MHz (top_module.xdc)
-│   ├── fpga_reports/         # Báo cáo PPA chi tiết sau Place & Route (Utilization, Timing, Power)
-│   └── scripts/              # TCL scripts tự động hóa tổng hợp (Baseline, Secure MAC, SoC Top, AXI)
-│
-├── reports/                  # Báo cáo dữ liệu thực nghiệm & Biểu đồ
-│   └── master_verification_report.md # 🛡️ Báo cáo tổng hợp chất lượng kiểm chứng 18/18 Suites
-│
-├── tools/                    # Bộ công cụ Python tự động hóa
-│   ├── linting/              # PySlang RTL Linters quét AST và kiểm tra cú pháp
-│   └── analysis/             # Trích xuất biểu đồ phân tích thực nghiệm PPA & Fault Space
-│
-├── CITATION.cff              # 📄 Tệp định dạng trích dẫn chuẩn GitHub (1-Click BibTeX Citation)
-└── REPRODUCIBILITY.md        # 🔬 Hướng dẫn chi tiết Artifact Evaluation & Tái tạo kết quả NCKH
-```
-
----
-
 ## 🚀 Hướng dẫn Thực thi & Tái tạo Kết quả (Quick Start & Artifact Reproduction)
 
 ### 1. Cài đặt Môi trường Python
@@ -361,9 +275,6 @@ Xem chi tiết tại [`CITATION.cff`](CITATION.cff) và [`REPRODUCIBILITY.md`](R
 
 ---
 
-## 👥 Tác giả & Giấy phép (Authors & License)
+## ⚖️ Giấy phép (License)
 
-- **Chủ nhiệm đề tài / Tác giả:** Quách Tuấn Thành ([@quachtuanthanh80-arch](https://github.com/quachtuanthanh80-arch))
-- **Cơ quan / Phòng nghiên cứu:** Hardware Security and Dependable Systems Laboratory, Department of Electronic and Computer Engineering.
-- **Đề tài NCKH:** Nghiên cứu & Hiện thực hóa Lõi Vi xử lý RISC-V tích hợp Bộ tăng tốc AI Secure MAC Dung lỗi Bức xạ.
-- **Giấy phép bản quyền:** Mã nguồn mở phát hành theo **[MIT License](LICENSE)**.
+Mã nguồn mở phát hành theo **[MIT License](LICENSE)**.

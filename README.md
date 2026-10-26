@@ -229,24 +229,32 @@ Thực nghiệm suy luận một nơ-ron tích chập/kết nối đầy đủ (
 
 ## 🚀 Hướng dẫn Thực thi & Tái tạo Kết quả (Quick Start & Artifact Reproduction)
 
-### 1. Cài đặt Môi trường Python
+### 🐳 Cách 1: Sử dụng Docker Container (Khuyên dùng cho Thẩm định NCKH)
+Không cần cài đặt thủ công công cụ, chỉ cần chạy qua Docker:
+```bash
+# Đóng gói image container (Ubuntu 22.04 + Icarus Verilog + Python + Cocotb 2.1)
+docker build -t riscv-secure-mac .
+
+# Chạy tự động toàn bộ 18 test suites kiểm chứng NCKH (~2.5 phút)
+docker run --rm riscv-secure-mac
+
+# Hoặc chạy riêng bộ benchmark quốc tế (RISC-V ACT & Embench-IoT)
+docker run --rm riscv-secure-mac python3 tb/cocotb/benchmarks/run_benchmarks.py
+```
+
+### 💻 Cách 2: Chạy trực tiếp trên máy cục bộ (Native Host)
+1. Cài đặt thư viện Python:
 ```bash
 pip install cocotb cocotb-tools pyslang matplotlib
 ```
 *Yêu cầu môi trường đã cài đặt **Icarus Verilog (`iverilog`)** v11 hoặc v12.*
 
-### 2. Chạy Toàn bộ 18 Bộ Kiểm thử Tự động (~2.5 phút)
+2. Chạy toàn bộ 18 bộ kiểm thử tự động:
 ```bash
 python run_all_tests.py
 ```
-*Tất cả 18 bộ kiểm thử (bao gồm Embench-IoT, RISC-V ACT, MLPerf Tiny Digits MLP, SVA Formal và ISO 26262 Dual-Rail) sẽ tự động chạy và xuất báo cáo khoa học tại `reports/master_verification_report.md`.*
 
-### 3. Chạy Độc lập Bộ Chuẩn Quốc tế (Embench-IoT & RISC-V ACT)
-```bash
-python tb/cocotb/benchmarks/run_benchmarks.py
-```
-
-### 4. Chạy Tổng hợp FPGA Thực tế bằng Vivado Batch Mode
+3. Chạy tổng hợp FPGA Thực tế bằng Vivado Batch Mode:
 ```powershell
 # Tổng hợp và phân tích PPA khối Secure MAC AXI4-Lite IP
 vivado -mode batch -source "synth/scripts/run_synth_secure_mac_axi.tcl"

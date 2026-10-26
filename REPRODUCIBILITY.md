@@ -52,7 +52,22 @@ pip install cocotb cocotb-tools pyslang matplotlib
 
 ## 3. One-Click Full Verification & Regression (~2.5 minutes)
 
-To execute the entire 18-step master verification suite and generate the comprehensive scientific markdown dashboard:
+### 🐳 Option A: Automated Reproduction via Docker Container (Recommended)
+If you have Docker installed, you can replicate the entire artifact evaluation without configuring any local toolchains:
+
+```bash
+# 1. Build the container image (Ubuntu 22.04 + Icarus Verilog + Python 3.10 + Cocotb 2.1)
+docker build -t riscv-secure-mac .
+
+# 2. Run the full 18-step master verification regression
+docker run --rm riscv-secure-mac
+
+# 3. Or run only the independent benchmarks (RISC-V ACT & Embench-IoT)
+docker run --rm riscv-secure-mac python3 tb/cocotb/benchmarks/run_benchmarks.py
+```
+
+### 💻 Option B: Native Host Execution
+To execute the entire 18-step master verification suite and generate the comprehensive scientific markdown dashboard on the host:
 
 ```bash
 python run_all_tests.py

@@ -17,8 +17,9 @@ puts "========================================================"
 # 2. Read RTL Sources
 puts ">>> Reading RTL Sources..."
 read_verilog -sv [glob "$proj_dir/rtl/cpu/*.sv"]
-read_verilog     "$proj_dir/rtl/mac/secure_mac.v"
-read_verilog     "$proj_dir/rtl/top/top_module.v"
+read_verilog -sv "$proj_dir/rtl/mac/ewma_tracker.sv"
+read_verilog -sv "$proj_dir/rtl/mac/secure_mac.v"
+read_verilog -sv "$proj_dir/rtl/top/top_module.v"
 
 # 3. Read Timing & Physical Constraints
 puts ">>> Reading Constraints..."
@@ -26,7 +27,7 @@ read_xdc "$proj_dir/synth/constraints/top_module.xdc"
 
 # 4. Synthesis
 puts ">>> Running Synthesis..."
-synth_design -top $top_module -part $part -mode out_of_context
+synth_design -top $top_module -part $part
 write_checkpoint -force "$proj_dir/synth/checkpoints/post_synth.dcp"
 
 # 5. Implementation (Place & Route)
@@ -43,6 +44,8 @@ report_utilization     -file "$proj_dir/synth/fpga_reports/top_module_utilizatio
 report_timing_summary -file "$proj_dir/synth/fpga_reports/top_module_timing.txt"
 report_power          -file "$proj_dir/synth/fpga_reports/top_module_power.txt"
 report_clocks         -file "$proj_dir/synth/fpga_reports/top_module_clockInfo.txt"
+report_methodology    -file "$proj_dir/synth/fpga_reports/top_module_methodology.txt"
+report_drc            -file "$proj_dir/synth/fpga_reports/top_module_drc.txt"
 
 puts "========================================================"
 puts "  BUILD COMPLETE FOR top_module!"

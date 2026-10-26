@@ -54,10 +54,14 @@ module secure_mac #(
     input  logic                                start,
     input  logic                                context_reset,   // ML EWMA dynamic layer recalibration pulse
     input  logic                                alpha_sel,       // 0: fast adaptation, 1: steady-state
+    input  logic signed [OUT_WIDTH-1:0]         cfg_anomaly_threshold, // Dynamic runtime threshold from AXI config
     output logic signed [OUT_WIDTH-1:0]         out,
     output logic                                fault_detected,
     output logic                                valid,
-    output logic                                rollback
+    output logic                                rollback,
+    output logic signed [OUT_WIDTH-1:0]         ewma_mean_out,   // Online EWMA mean telemetry
+    output logic signed [OUT_WIDTH-1:0]         ewma_mad_out,    // Online EWMA MAD telemetry
+    output logic signed [OUT_WIDTH-1:0]         active_threshold_out
 );
 
     // Stage 1: Thanh ghi ngõ vào & Dual-rail control
@@ -134,6 +138,22 @@ module secure_mac #(
     wire signed [31:0] mac_result_32 = (OUT_WIDTH == 32) ? mac_result : { { (32-OUT_WIDTH){mac_result[OUT_WIDTH-1]} }, mac_result };
     mod3_encoder_32b u_enc_out (.in(mac_result_32), .out(stage2_out_mod3));
 
+    // Dedicated 16-bit Residue Encoder & Check for Multiplier Output Register (pipe_product)
+    wire [1:0] stage2_prod_mod3;
+    wire [15:0] pipe_product_16 = (2*IN_WIDTH == 16) ? pipe_product : { {(16-2*IN_WIDTH){pipe_product[2*IN_WIDTH-1]}}, pipe_product };
+    mod3_encoder_16b u_enc_prod (.in(pipe_product_16), .out(stage2_prod_mod3));
+
+    logic [1:0] expected_prod_mod3_comb;
+    always_comb begin
+        case (pipe_ab_mod3)
+            4'd0, 4'd3: expected_prod_mod3_comb = 2'd0;
+            4'd1, 4'd4: expected_prod_mod3_comb = 2'd1;
+            4'd2:       expected_prod_mod3_comb = 2'd2;
+            default:    expected_prod_mod3_comb = 2'd0;
+        endcase
+    end
+    wire stage2_prod_mismatch = (stage2_prod_mod3 != expected_prod_mod3_comb);
+
     wire [3:0] rns_calc = pipe_ab_mod3 + pipe_c_mod3;
     logic [1:0] expected_mod3_comb;
 
@@ -151,6 +171,7 @@ module secure_mac #(
     logic signed [OUT_WIDTH-1:0] pipe_mac_result;
     logic [1:0]                  pipe_out_mod3;
     logic [1:0]                  pipe_expected_mod3;
+    logic                        pipe_prod_mismatch;
     logic                        valid_d3;
     logic                        valid_d3_n;
 
@@ -159,6 +180,7 @@ module secure_mac #(
             pipe_mac_result    <= '0;
             pipe_out_mod3      <= '0;
             pipe_expected_mod3 <= '0;
+            pipe_prod_mismatch <= 1'b0;
             valid_d3           <= 1'b0;
             valid_d3_n         <= 1'b1;
         end else begin
@@ -168,11 +190,13 @@ module secure_mac #(
                 pipe_mac_result    <= mac_result;
                 pipe_out_mod3      <= stage2_out_mod3;
                 pipe_expected_mod3 <= stage2_expected_mod3;
+                pipe_prod_mismatch <= stage2_prod_mismatch;
             end
         end
     end
 
-    wire mod3_mismatch = (pipe_expected_mod3 != pipe_out_mod3);
+    wire test_mode_active = (test_mode === 1'b1);
+    wire mod3_mismatch = (pipe_expected_mod3 != pipe_out_mod3) | test_mode_active;
 
     // ML-Guided Online Adaptive Range Anomaly Detection (EWMA + MAD 3-sigma)
     wire signed [OUT_WIDTH-1:0] adaptive_threshold;
@@ -194,7 +218,7 @@ module secure_mac #(
         .clk(clk),
         .rst_n(rst_n),
         .data_in(pipe_mac_result),
-        .valid_in(valid_d3 & ~mod3_mismatch),
+        .valid_in(valid_d3 & ~mod3_mismatch & ~pipe_prod_mismatch),
         .context_reset(safe_context_reset),
         .alpha_sel(safe_alpha_sel),
         .threshold_out(adaptive_threshold),
@@ -203,7 +227,11 @@ module secure_mac #(
         .warmup_done_out(ewma_warmup_done)
     );
 
-    wire signed [OUT_WIDTH-1:0] active_threshold = (USE_ADAPTIVE_THRESHOLD) ? adaptive_threshold : ANOMALY_THRESHOLD;
+    wire signed [OUT_WIDTH-1:0] base_threshold = (cfg_anomaly_threshold != '0) ? cfg_anomaly_threshold : ANOMALY_THRESHOLD;
+    wire signed [OUT_WIDTH-1:0] active_threshold = (USE_ADAPTIVE_THRESHOLD) ? adaptive_threshold : base_threshold;
+    assign active_threshold_out = active_threshold;
+    assign ewma_mean_out        = ewma_mean;
+    assign ewma_mad_out         = ewma_mad;
 
     // Range anomaly check với hysteresis deadband chống flickering và bảo vệ chống tràn số
     wire signed [OUT_WIDTH:0] sum_upper = {active_threshold[OUT_WIDTH-1], active_threshold} + {HYSTERESIS_BAND[OUT_WIDTH-1], HYSTERESIS_BAND};
@@ -215,8 +243,8 @@ module secure_mac #(
     // Control Path Integrity: Parity check kép giữa valid và valid_n
     wire control_fault = (valid_d1 == valid_d1_n) || (valid_d2 == valid_d2_n) || (valid_d3 == valid_d3_n);
 
-    // Disagreement trigger: Modulo-3 sai lệch | Vượt biên biên độ | Lỗi điều khiển
-    wire disagreement = mod3_mismatch | range_anomaly | control_fault;
+    // Disagreement trigger: Modulo-3 sai lệch (tổng hoặc tích) | Vượt biên biên độ | Lỗi điều khiển
+    wire disagreement = mod3_mismatch | pipe_prod_mismatch | range_anomaly | control_fault;
 
     // Stage 4: Chốt ngõ ra & Phục hồi Rollback
     logic signed [OUT_WIDTH-1:0] shadow_accumulator;
@@ -282,6 +310,35 @@ module mod3_encoder_8b (
     wire [1:0] l1_1 = mod3_add(l0_2, l0_3);
 
     assign out = mod3_add(l1_0, l1_1);
+
+endmodule
+
+
+// Bộ mã hóa Modulo 3 cho số 16-bit có dấu dạng cây nhị phân 4 tầng
+module mod3_encoder_16b (
+    input  wire [15:0] in,
+    output wire [1:0]  out
+);
+    import mod3_pkg::*;
+
+    wire [1:0] l0_0 = slice_mod3(in[1:0]);
+    wire [1:0] l0_1 = slice_mod3(in[3:2]);
+    wire [1:0] l0_2 = slice_mod3(in[5:4]);
+    wire [1:0] l0_3 = slice_mod3(in[7:6]);
+    wire [1:0] l0_4 = slice_mod3(in[9:8]);
+    wire [1:0] l0_5 = slice_mod3(in[11:10]);
+    wire [1:0] l0_6 = slice_mod3(in[13:12]);
+    wire [1:0] l0_7 = msb_pair_mod3(in[15:14]);
+
+    wire [1:0] l1_0 = mod3_add(l0_0, l0_1);
+    wire [1:0] l1_1 = mod3_add(l0_2, l0_3);
+    wire [1:0] l1_2 = mod3_add(l0_4, l0_5);
+    wire [1:0] l1_3 = mod3_add(l0_6, l0_7);
+
+    wire [1:0] l2_0 = mod3_add(l1_0, l1_1);
+    wire [1:0] l2_1 = mod3_add(l1_2, l1_3);
+
+    assign out = mod3_add(l2_0, l2_1);
 
 endmodule
 

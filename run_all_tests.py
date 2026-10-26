@@ -1,6 +1,6 @@
 """
 Master Test Runner for NCKH RISC-V + Secure MAC SoC Project.
-Runs all Linters, Unit Tests, and System-Level Cocotb Testbenches.
+Runs all Linters, Unit Tests, SVA Assertions, and System-Level Cocotb Testbenches.
 """
 
 import subprocess
@@ -50,29 +50,41 @@ def main():
         # 6. Validates normal operation and fault-tolerance of Secure MAC
         ("6. Cocotb Secure MAC Tests & Modulo-3 Coverage (10 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac" / "run_mac_tests.py")]),
         
-        # 7. Complete SoC integration testing
-        ("7. Cocotb SoC System Integration Tests (4 End-to-End Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "top_module" / "run_top_tests.py")]),
+        # 7. EWMA Adaptive Anomaly Detection & Corner Cases (8 Cases)
+        ("7. Cocotb EWMA Adaptive Anomaly & Corner Cases (8 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac" / "test_adaptive_threshold.py")]),
+
+        # 8. ISO 26262 ASIL D Dual-Rail Control-Path Fault Injection (5 Cases)
+        ("8. Cocotb Dual-Rail Control-Path Fault Injection (5 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac" / "test_control_fault.py")]),
+
+        # 9. Complete SoC integration testing
+        ("9. Cocotb SoC System Integration Tests (4 End-to-End Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "top_module" / "run_top_tests.py")]),
         
-        # 8. Traditional SystemVerilog Self-Checking Testbenches
-        ("8. Traditional SystemVerilog Self-Checking Testbenches", py_cmd + [str(root_dir / "tools" / "run_sv_tb.py")]),
+        # 10. Traditional SystemVerilog Self-Checking Testbenches
+        ("10. Traditional SystemVerilog Self-Checking Testbenches", py_cmd + [str(root_dir / "tools" / "run_sv_tb.py")]),
 
-        # 9. Statistical fault injection campaign
-        ("9. Cocotb Fault Injection Campaign (4,400 Trials & Coverage)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac" / "run_fault_campaign.py")]),
+        # 11. Statistical fault injection campaign
+        ("11. Cocotb Fault Injection Campaign (4,400 Trials & Coverage)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac" / "run_fault_campaign.py")]),
         
-        # 10. AI workload resilience benchmark
-        ("10. Cocotb AI Inference Resilience Benchmark (INT8 FC Layer)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac" / "run_ai_resilience_test.py")]),
+        # 12. AI workload resilience benchmark
+        ("12. Cocotb AI Inference Resilience Benchmark (INT8 FC Layer)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac" / "run_ai_resilience_test.py")]),
 
-        # 11. Secure MAC AXI4-Lite IP test suite (Protocol, Byte Strobes, SLVERR)
-        ("11. Cocotb Secure MAC AXI4-Lite IP Suite (6 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac_axi" / "run_tests.py")]),
+        # 13. CPU-to-AXI Master Bridge isolated test suite (6 Cases)
+        ("13. Cocotb CPU-to-AXI Master Bridge Suite (6 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "cpu_axi_bridge" / "run_tests.py")]),
 
-        # 12. Dedicated AXI4-Lite Crossbar Interconnect test suite (Routing, DECERR)
-        ("12. Cocotb AXI4-Lite Crossbar Interconnect Suite (3 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "axi_interconnect" / "run_tests.py")]),
+        # 14. Secure MAC AXI4-Lite IP test suite (Protocol, Byte Strobes, SLVERR, BIST, Telemetry, Masking)
+        ("14. Cocotb Secure MAC AXI4-Lite IP Suite (10 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac_axi" / "run_tests.py")]),
 
-        # 13. Full AXI-Lite SoC System Integration Suite
-        ("13. Cocotb Full AXI-Lite SoC Integration Suite (4 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "top_module_axi" / "run_tests.py")]),
+        # 15. Dedicated AXI4-Lite Crossbar Interconnect test suite (Routing, DECERR, Concurrent RW, Strobes)
+        ("15. Cocotb AXI4-Lite Crossbar Interconnect Suite (6 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "axi_interconnect" / "run_tests.py")]),
 
-        # 14. End-to-End Real-World Digits MLP AXI Inference Resilience Benchmark
-        ("14. Cocotb Digits MLP AXI Resilience Benchmark (2 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac_axi" / "run_ml_inference_test.py")]),
+        # 16. Full AXI-Lite SoC System Integration Suite (Reset, DMEM, MAC, Fault IRQ, Vector Dot, IRQ Clear)
+        ("16. Cocotb Full AXI-Lite SoC Integration Suite (6 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "top_module_axi" / "run_tests.py")]),
+
+        # 17. End-to-End Real-World Digits MLP AXI Inference Resilience Benchmark
+        ("17. Cocotb Digits MLP AXI Resilience Benchmark (2 Cases)", py_cmd + [str(root_dir / "tb" / "cocotb" / "secure_mac_axi" / "run_ml_inference_test.py")]),
+
+        # 18. Reputable Independent Benchmarks (Embench-IoT matmult-int & RISC-V ACT)
+        ("18. Independent Benchmarks (Embench-IoT & RISC-V ACT)", py_cmd + [str(root_dir / "tb" / "cocotb" / "benchmarks" / "run_benchmarks.py")]),
     ]
     
     results = []
@@ -103,7 +115,7 @@ def main():
         print(f"Note: Could not generate master report: {e}")
 
     if all_passed:
-        print("\n[SUCCESS] ALL 14 COMPREHENSIVE VERIFICATION SUITES PASSED (100% SUCCESS)!\n")
+        print(f"\n[SUCCESS] ALL {len(steps)} COMPREHENSIVE VERIFICATION SUITES PASSED (100% SUCCESS)!\n")
         sys.exit(0)
     else:
         print("\n[FAIL] SOME TESTS FAILED. PLEASE CHECK LOGS ABOVE.\n")

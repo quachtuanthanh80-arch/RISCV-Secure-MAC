@@ -126,7 +126,8 @@ module axi_interconnect_1m2s #(
     assign s_axi_arready  = rd_sel_s0 ? m0_axi_arready :
                             rd_sel_s1 ? m1_axi_arready : 1'b1;
 
-    assign s_axi_rvalid   = rd_sel_s0 ? m0_axi_rvalid  :
+    assign s_axi_rvalid   = ~aresetn   ? 1'b0 :
+                            rd_sel_s0 ? m0_axi_rvalid  :
                             rd_sel_s1 ? m1_axi_rvalid  : s_axi_arvalid;
 
     assign s_axi_rdata    = rd_sel_s0 ? m0_axi_rdata   :
@@ -134,5 +135,40 @@ module axi_interconnect_1m2s #(
 
     assign s_axi_rresp    = rd_sel_s0 ? m0_axi_rresp   :
                             rd_sel_s1 ? m1_axi_rresp   : AXI_RESP_DECERR;
+
+`ifndef SYNTHESIS
+    axi_interconnect_sva #(
+        .C_AXI_ADDR_WIDTH (C_AXI_ADDR_WIDTH),
+        .C_AXI_DATA_WIDTH (C_AXI_DATA_WIDTH)
+    ) u_xbar_sva (
+        .aclk          (aclk),
+        .aresetn       (aresetn),
+        .s_axi_awaddr  (s_axi_awaddr),
+        .s_axi_awprot  (s_axi_awprot),
+        .s_axi_awvalid (s_axi_awvalid),
+        .s_axi_awready (s_axi_awready),
+        .s_axi_wdata   (s_axi_wdata),
+        .s_axi_wstrb   (s_axi_wstrb),
+        .s_axi_wvalid  (s_axi_wvalid),
+        .s_axi_wready  (s_axi_wready),
+        .s_axi_bresp   (s_axi_bresp),
+        .s_axi_bvalid  (s_axi_bvalid),
+        .s_axi_bready  (s_axi_bready),
+        .s_axi_araddr  (s_axi_araddr),
+        .s_axi_arprot  (s_axi_arprot),
+        .s_axi_arvalid (s_axi_arvalid),
+        .s_axi_arready (s_axi_arready),
+        .s_axi_rdata   (s_axi_rdata),
+        .s_axi_rresp   (s_axi_rresp),
+        .s_axi_rvalid  (s_axi_rvalid),
+        .s_axi_rready  (s_axi_rready),
+        .m0_axi_awvalid(m0_axi_awvalid),
+        .m0_axi_wvalid (m0_axi_wvalid),
+        .m0_axi_arvalid(m0_axi_arvalid),
+        .m1_axi_awvalid(m1_axi_awvalid),
+        .m1_axi_wvalid (m1_axi_wvalid),
+        .m1_axi_arvalid(m1_axi_arvalid)
+    );
+`endif
 
 endmodule

@@ -18,7 +18,7 @@ puts "========================================================"
 
 # 2. Read Source Files
 read_verilog -sv "$proj_dir/rtl/mac/ewma_tracker.sv"
-read_verilog "$proj_dir/rtl/mac/secure_mac.v"
+read_verilog -sv "$proj_dir/rtl/mac/secure_mac.v"
 
 # 3. Synthesis
 puts ">>> Running Synthesis..."

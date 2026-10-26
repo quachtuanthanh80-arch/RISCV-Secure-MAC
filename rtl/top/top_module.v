@@ -88,16 +88,23 @@ module top_module (
 
     (* dont_touch = "true" *)
     secure_mac #(.IN_WIDTH(8), .OUT_WIDTH(16)) u_mac (
-        .clk            (clk),
-        .rst_n          (rst_n),
-        .a              (mac_a),
-        .b              (mac_b),
-        .c              (mac_c),
-        .start          (mac_start_reg),
-        .out            (mac_out_int),
-        .fault_detected (mac_fault_int),
-        .valid          (mac_valid_int),
-        .rollback       (mac_rollback_int)
+        .clk                   (clk),
+        .rst_n                 (rst_n),
+        .test_mode             (1'b0),
+        .a                     (mac_a),
+        .b                     (mac_b),
+        .c                     (mac_c),
+        .start                 (mac_start_reg),
+        .context_reset         (1'b0),
+        .alpha_sel             (1'b1),
+        .cfg_anomaly_threshold (16'sd0),
+        .out                   (mac_out_int),
+        .fault_detected        (mac_fault_int),
+        .valid                 (mac_valid_int),
+        .rollback              (mac_rollback_int),
+        .ewma_mean_out         (),
+        .ewma_mad_out          (),
+        .active_threshold_out  ()
     );
 
     assign irq = mac_fault_int;

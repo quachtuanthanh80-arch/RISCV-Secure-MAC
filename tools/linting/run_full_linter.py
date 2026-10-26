@@ -134,7 +134,9 @@ else:
 print("\n--- Project 4: AXI-Lite System Integration (top_module_axi.v) ---")
 axi_sys_files = [
     str(workspace / "rtl" / "top" / "top_module_axi.v"),
+    str(workspace / "rtl" / "bus" / "cpu_to_axi_master_sva.sv"),
     str(workspace / "rtl" / "bus" / "cpu_to_axi_master.v"),
+    str(workspace / "rtl" / "bus" / "axi_interconnect_sva.sv"),
     str(workspace / "rtl" / "bus" / "axi_interconnect_1m2s.v"),
     str(workspace / "rtl" / "cpu" / "dmem_axi.v"),
     str(workspace / "rtl" / "mac" / "secure_mac_axi_sva.sv"),

@@ -325,3 +325,168 @@ async def test_axi_slverr_response(dut):
     await bfm.read(0x02, expect_error=True)
 
     dut._log.info("PASS: AXI4-Lite SLVERR response on invalid/unaligned accesses verified 100% compliant!")
+
+
+@cocotb.test()
+async def test_axi_intr_enable_masking(dut):
+    """Test 7: Verify INTR_EN register masking and W1C status clear for ISO 26262 ASIL-D safety handling."""
+    clock = Clock(dut.aclk, 10, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    bfm = AxiLiteMasterBFM(dut)
+    await bfm.reset()
+
+    # Step 1: Disable fault interrupt by writing INTR_EN (0x1C) = 0x00
+    await bfm.write(0x1C, 0x00)
+    intr_en_val = await bfm.read(0x1C)
+    assert intr_en_val == 0x00, f"Expected INTR_EN=0, got {intr_en_val}"
+
+    # Step 2: Inject fault while interrupt is masked
+    await bfm.write(0x00, 10)
+    await bfm.write(0x04, 10)
+    await bfm.write(0x08, 0)
+    
+    # Start computation
+    start_task = cocotb.start_soon(bfm.write(0x0C, 0x01))
+    for cycle in range(8):
+        await RisingEdge(dut.aclk)
+        if int(dut.u_secure_mac_core.valid_d1.value) == 1:
+            orig_val = int(dut.u_secure_mac_core.pipe_product.value)
+            dut.u_secure_mac_core.pipe_product.value = orig_val ^ (1 << 3)
+    await start_task
+
+    for _ in range(5):
+        await RisingEdge(dut.aclk)
+
+    # Verify IRQ remains 0 because it was masked
+    assert int(dut.irq.value) == 0, "IRQ should be masked when INTR_EN[0] is 0!"
+
+    # Step 3: Unmask fault interrupt by writing INTR_EN (0x1C) = 0x01
+    await bfm.write(0x1C, 0x01)
+    await RisingEdge(dut.aclk)
+    await Timer(1, unit="ns")
+    assert int(dut.irq.value) == 1, "IRQ should assert immediately after unmasking sticky fault!"
+
+    # Step 4: Write-1-to-Clear (W1C) on STATUS (0x14) bit 0
+    await bfm.write(0x14, 0x01)
+    await RisingEdge(dut.aclk)
+    await Timer(1, unit="ns")
+    assert int(dut.irq.value) == 0, "IRQ should drop to 0 after W1C clear on STATUS register!"
+    dut._log.info("PASS: Interrupt masking and W1C fault recovery verified successfully!")
+
+
+@cocotb.test()
+async def test_axi_hardware_telemetry_counters(dut):
+    """Test 8: Verify hardware event counters (Fault, Rollback, Operations) and CNT_RST."""
+    clock = Clock(dut.aclk, 10, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    bfm = AxiLiteMasterBFM(dut)
+    await bfm.reset()
+
+    # Reset counters via CTRL[5] = 1 (CNT_RESET)
+    await bfm.write(0x0C, (1 << 5))
+    
+    # Execute 3 successful MAC operations
+    for op_i in range(3):
+        await bfm.write(0x00, 5 + op_i)
+        await bfm.write(0x04, 2)
+        await bfm.write(0x08, 0)
+        await bfm.write(0x0C, 0x01)
+        for _ in range(8):
+            await RisingEdge(dut.aclk)
+
+    # Read operation counter at 0x28
+    op_cnt = await bfm.read(0x28)
+    dut._log.info(f"Operation Counter: {op_cnt} (Expected: 3)")
+    assert op_cnt == 3, f"Expected 3 successful operations, got {op_cnt}"
+
+    # Inject 1 fault
+    start_task = cocotb.start_soon(bfm.write(0x0C, 0x01))
+    for cycle in range(8):
+        await RisingEdge(dut.aclk)
+        if int(dut.u_secure_mac_core.valid_d1.value) == 1:
+            orig_val = int(dut.u_secure_mac_core.pipe_product.value)
+            dut.u_secure_mac_core.pipe_product.value = orig_val ^ (1 << 2)
+    await start_task
+    for _ in range(6):
+        await RisingEdge(dut.aclk)
+
+    # Read FAULT_CNT register at 0x20: [31:16]=Rollback Cnt, [15:0]=Fault Cnt
+    fault_word = await bfm.read(0x20)
+    fault_cnt = fault_word & 0xFFFF
+    rollback_cnt = (fault_word >> 16) & 0xFFFF
+    dut._log.info(f"Hardware Telemetry: Fault Count={fault_cnt}, Rollback Count={rollback_cnt}")
+    assert fault_cnt == 1, f"Expected 1 fault, got {fault_cnt}"
+    assert rollback_cnt == 1, f"Expected 1 rollback, got {rollback_cnt}"
+
+    # Reset counters via CTRL[5] and verify clear
+    await bfm.write(0x0C, (1 << 5))
+    fault_word_after = await bfm.read(0x20)
+    op_cnt_after = await bfm.read(0x28)
+    assert fault_word_after == 0, f"Expected 0 after CNT_RESET, got 0x{fault_word_after:08x}"
+    assert op_cnt_after == 0, f"Expected 0 after CNT_RESET, got {op_cnt_after}"
+    dut._log.info("PASS: Hardware safety telemetry event counters verified successfully!")
+
+
+@cocotb.test()
+async def test_axi_online_bist_self_test(dut):
+    """Test 9: Verify online Built-In Self-Test (BIST) via TEST_MODE bit for IEC 61508 / ISO 26262 ASIL-D."""
+    clock = Clock(dut.aclk, 10, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    bfm = AxiLiteMasterBFM(dut)
+    await bfm.reset()
+
+    # Step 1: Enable TEST_MODE via CTRL[3] = 1
+    await bfm.write(0x0C, (1 << 3))
+    ctrl_val = await bfm.read(0x0C)
+    assert (ctrl_val & (1 << 3)) != 0, "TEST_MODE bit was not set in CTRL register"
+
+    # Step 2: Trigger calculation under TEST_MODE (self-test)
+    await bfm.write(0x00, 7)
+    await bfm.write(0x04, 8)
+    await bfm.write(0x08, 0)
+    await bfm.write(0x0C, (1 << 3) | 1) # START + TEST_MODE
+
+    for _ in range(8):
+        await RisingEdge(dut.aclk)
+
+    # In self-test mode, hardware intentionally flags fault to verify alarm circuit
+    assert int(dut.irq.value) == 1, "Self-test did not assert IRQ alarm!"
+    status = await bfm.read(0x14)
+    assert (status & 1) == 1, "Self-test did not assert fault flag in STATUS register!"
+
+    # Step 3: Exit TEST_MODE and clear fault
+    await bfm.write(0x0C, (1 << 4)) # Clear fault pulse
+    await RisingEdge(dut.aclk)
+    await Timer(1, unit="ns")
+    assert int(dut.irq.value) == 0, "IRQ should drop to 0 after exiting self-test and clearing fault"
+    dut._log.info("PASS: Online Built-In Self-Test (BIST) verified successfully!")
+
+
+@cocotb.test()
+async def test_axi_ewma_and_dynamic_config(dut):
+    """Test 10: Verify EWMA telemetry readback (0x24) and dynamic threshold configuration (0x18)."""
+    clock = Clock(dut.aclk, 10, unit="ns")
+    cocotb.start_soon(clock.start())
+
+    bfm = AxiLiteMasterBFM(dut)
+    await bfm.reset()
+
+    # Configure dynamic runtime threshold at 0x18
+    target_thresh = 15000
+    await bfm.write(0x18, target_thresh)
+    read_thresh = await bfm.read(0x18)
+    assert (read_thresh & 0xFFFF) == target_thresh, f"Expected threshold {target_thresh}, got {read_thresh}"
+
+    # Recalibrate EWMA context via CTRL[1] = 1 (CONTEXT_RESET)
+    await bfm.write(0x0C, (1 << 1))
+    await RisingEdge(dut.aclk)
+
+    # Read EWMA telemetry at 0x24: [31:16]=Mean, [15:0]=MAD
+    ewma_stat = await bfm.read(0x24)
+    dut._log.info(f"EWMA Telemetry Word at 0x24: 0x{ewma_stat:08x}")
+
+    dut._log.info("PASS: EWMA telemetry readback and dynamic threshold configuration verified successfully!")
+

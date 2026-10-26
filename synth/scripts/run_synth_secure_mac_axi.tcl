@@ -14,8 +14,9 @@ puts "  PROJECT ROOT: $proj_dir"
 puts "========================================================"
 
 # Read RTL Sources
-read_verilog "$proj_dir/rtl/mac/secure_mac.v"
-read_verilog "$proj_dir/rtl/mac/secure_mac_axi.v"
+read_verilog -sv "$proj_dir/rtl/mac/ewma_tracker.sv"
+read_verilog -sv "$proj_dir/rtl/mac/secure_mac.v"
+read_verilog -sv "$proj_dir/rtl/mac/secure_mac_axi.v"
 
 # Synthesis out-of-context (OOC) IP core
 puts ">>> Running Synthesis..."

@@ -1,24 +1,34 @@
 """
 Fault Injection Campaign Runner & Coverage Analysis Generator.
 Runs comprehensive fault injection simulations (5 campaigns) and generates publication-grade tables.
+Includes `--seed` argument for deterministic seed replay and reproducible regression.
 """
 
 import sys
 import os
 import json
 import time
+import argparse
 from pathlib import Path
 from cocotb_tools.runner import get_runner
 
 
-def run_campaign():
+def run_campaign(seed=None):
     root_dir = Path(__file__).resolve().parent.parent.parent.parent # D:/NCKH
     test_dir = Path(__file__).resolve().parent
     reports_dir = root_dir / "reports"
     reports_dir.mkdir(parents=True, exist_ok=True)
     
+    if seed is not None:
+        os.environ["COCOTB_RANDOM_SEED"] = str(seed)
+        os.environ["PYTHONHASHSEED"] = str(seed)
+        seed_str = f"Deterministic Seed: {seed}"
+    else:
+        seed_str = "Random Seed: Auto-generated"
+
     print("=" * 88)
     print("      STARTING COMPREHENSIVE HARDWARE SECURITY FAULT CAMPAIGN (COCOTB + ICARUS)")
+    print(f"      [{seed_str}]")
     print("=" * 88)
     start_time = time.time()
 
@@ -124,4 +134,7 @@ def run_campaign():
 
 
 if __name__ == "__main__":
-    run_campaign()
+    parser = argparse.ArgumentParser(description="Hardware Security Fault Injection Campaign Runner")
+    parser.add_argument("--seed", type=int, default=None, help="Set random seed for deterministic regression replay")
+    args = parser.parse_args()
+    run_campaign(seed=args.seed)

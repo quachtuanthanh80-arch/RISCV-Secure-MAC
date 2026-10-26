@@ -95,6 +95,10 @@ module top_module_axi (
     wire        mac_irq;
     assign irq = mac_irq;
 
+    wire               mac_core_valid_out;
+    wire               mac_core_rollback_out;
+    wire signed [15:0] mac_core_data_out;
+
     (* dont_touch = "true" *)
     riscv_cpu u_cpu (
         .clk            (clk),
@@ -111,10 +115,10 @@ module top_module_axi (
         .mac_a          (),
         .mac_b          (),
         .mac_c          (),
-        .mac_out        (16'b0),
+        .mac_out        (mac_core_data_out),
         .mac_fault      (mac_irq),
-        .mac_valid      (1'b0),
-        .mac_rollback   (1'b0),
+        .mac_valid      (mac_core_valid_out),
+        .mac_rollback   (mac_core_rollback_out),
 
         .irq            (mac_irq),
 
@@ -313,10 +317,13 @@ module top_module_axi (
 
         .s_axi_rdata   (s1_axi_rdata),
         .s_axi_rresp   (s1_axi_rresp),
-        .s_axi_rvalid  (s1_axi_rvalid),
-        .s_axi_rready  (s1_axi_rready),
+        .s_axi_rvalid     (s1_axi_rvalid),
+        .s_axi_rready     (s1_axi_rready),
 
-        .irq           (mac_irq)
+        .irq              (mac_irq),
+        .mac_valid_out    (mac_core_valid_out),
+        .mac_rollback_out (mac_core_rollback_out),
+        .mac_data_out     (mac_core_data_out)
     );
 
 endmodule

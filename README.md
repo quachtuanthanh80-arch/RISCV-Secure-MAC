@@ -32,9 +32,9 @@
 | **Phát hiện lỗi kép (MBU w/ EWMA)** | **`98.49%`** (SDC chỉ còn 1.51%) | Bộ theo dõi thích nghi EWMA không tốn DSP tăng độ bao phủ MBU từ 76.27% lên 98.49%. |
 | **Thời gian tự khôi phục (Rollback)** | **`Đúng 1 CK`** (Tức thời) | Khôi phục tức thì bằng **Shadow Accumulator**, không làm gián đoạn luồng lệnh CPU. |
 | **Biến thiên định thời (Timing Jitter)** | **`0 ns`** (Bất biến 3 CK) | Độ trễ 3 chu kỳ cố định, kháng hoàn toàn các cuộc tấn công kênh phụ thời gian (Timing Side-Channel). |
-| **Chi phí phần cứng (Hardware Overhead)** | **`+4.19% LUTs`** / **`+0.56% FFs`** | Chỉ tăng +36 LUTs và +6 FFs trên toàn bộ SoC Zynq-7000 (859 LUTs, 1,073 FFs). |
-| **Tần số & Công suất hoạt động** | **`122 mW`** @ **`116.80 MHz`** | Vượt mốc chuẩn 100 MHz trên chip FPGA AMD Xilinx Zynq-7000 ($WNS = +1.289$ ns). |
-| **Hiệu quả diện tích (Pareto Metric)** | **`21.18 pts / % area`** | Hiệu quả diện tích gấp **$45\times$** so với giải pháp tam trùng không gian truyền thống (TMR). |
+| **Chi phí phần cứng (Hardware Overhead)** | **`+5.14% LUTs`** / **`+1.47% FFs`** | Chỉ tăng +43 LUTs và +16 FFs trên toàn bộ SoC Zynq-7000 (879 LUTs, 1,101 FFs). |
+| **Tần số & Công suất hoạt động** | **`124 mW`** @ **`108.21 MHz`** | Vượt mốc chuẩn 100 MHz trên chip FPGA AMD Xilinx Zynq-7000 ($WNS = +0.759$ ns). |
+| **Hiệu quả diện tích (Pareto Metric)** | **`19.16 pts / % area`** | Hiệu quả diện tích gấp **$42.6\times$** so với giải pháp tam trùng không gian truyền thống (TMR). |
 
 ---
 
@@ -177,16 +177,16 @@ $$\tau_t = |\mu_t| + 3.75 \times \text{MAD}_t$$
 
 Tổng hợp và thực thi trên chip FPGA **AMD Xilinx Zynq-7000** (`xc7z020clg400-1`) ở tần số xung nhịp mục tiêu 100 MHz:
 
-| Nhóm Chỉ số PPA | Baseline MAC (`baseline_mac.v`) | Secure MAC (`secure_mac.v`) | Chênh lệch / Chi phí (Overhead) | Toàn bộ SoC Top (`top_module_axi.v`) |
+| Nhóm Chỉ số PPA | Baseline MAC (`baseline_mac.v`) | Secure MAC (`secure_mac.v`) | Chênh lệch / Chi phí (Overhead) | Toàn bộ SoC Top (`top_module.v`) |
 | :--- | :---: | :---: | :---: | :---: |
-| **Slice LUTs** | **99 LUTs** | **135 LUTs** | **+36 LUTs (+36.36% trên MAC / +4.19% SoC)** | **859 LUTs (1.62% chip)** |
-| **Slice Registers (FFs)** | **131 FFs** | **137 FFs** | **+6 FFs (+4.58% trên MAC / +0.56% SoC)** | **1,073 FFs (1.01% chip)** |
-| **CARRY4 Primitives** | **20 CARRY4** | **29 CARRY4** | **+9 CARRY4 (+45.00%)** | **57 CARRY4** |
+| **Slice LUTs** | **99 LUTs** | **205 LUTs** | **+43 LUTs (+5.14% trên toàn SoC)** | **879 LUTs (1.65% chip)** |
+| **Slice Registers (FFs)** | **131 FFs** | **178 FFs** | **+16 FFs (+1.47% trên toàn SoC)** | **1,101 FFs (1.03% chip)** |
+| **CARRY4 Primitives** | **20 CARRY4** | **26 CARRY4** | **+6 CARRY4 (+30.00%)** | **57 CARRY4** |
 | **Khối DSP Multiplier** | **0 DSP** | **0 DSP** | **Thuần LUT logic, khả chuyển 100% mọi FPGA/ASIC** | **0 DSP** |
-| **Tần số cực đại ($F_{max}$)** | **176.50 MHz** | **125.20 MHz** | **Vượt an toàn chuẩn công nghiệp 100 MHz** | **116.80 MHz** |
-| **Worst Negative Slack (WNS)**| **+4.335 ns** | **+2.012 ns** | **Đạt chuẩn Timing Closure 100 MHz** | **+1.289 ns** |
-| **Công suất Động (Dynamic)** | **5 mW** | **11 mW** | **+6 mW (+5.55%)** | **19 mW** |
-| **Tổng Công suất On-Chip** | **108 mW** | **114 mW** | **+6 mW (+5.55%)** | **122 mW** |
+| **Tần số cực đại ($F_{max}$)** | **176.50 MHz** | **175.38 MHz** | **Đạt 175.38 MHz (Vượt chuẩn 100 MHz)** | **108.21 MHz** |
+| **Worst Negative Slack (WNS)**| **+4.335 ns** | **+4.298 ns** | **Đạt chuẩn Timing Closure 100 MHz** | **+0.759 ns** |
+| **Công suất Động (Dynamic)** | **5 mW** | **11 mW** | **+5 mW (Mạch kiểm tra thặng dư số học)** | **18 mW** |
+| **Tổng Công suất On-Chip** | **108 mW** | **114 mW** | **+8 mW (+6.90% trên toàn SoC)** | **124 mW** |
 | **Biến thiên Jitter Thời gian** | **0 ns** | **0 ns** | **Kháng Timing Attacks (Constant 3 CK)** | **Bất biến 3 CK** |
 
 ---

@@ -14,6 +14,7 @@ def test_axi_interconnect_runner():
     root_dir = test_dir.parent.parent.parent  # D:/NCKH
 
     sources = [
+        root_dir / "rtl" / "bus" / "axi_interconnect_sva.sv",
         root_dir / "rtl" / "bus" / "axi_interconnect_1m2s.v",
     ]
     for src in sources:

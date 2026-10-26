@@ -49,7 +49,10 @@ foreach mac_entry $mac_list {
     catch {close_design -quiet}
 
     # 1. Read Verilog Source
-    read_verilog "$proj_dir/$mac_file"
+    if {$mac_name eq "secure_mac"} {
+        read_verilog -sv "$proj_dir/rtl/mac/ewma_tracker.sv"
+    }
+    read_verilog -sv "$proj_dir/$mac_file"
 
     # 2. Out-of-Context Synthesis
     puts "    [1/3] Running synth_design..."

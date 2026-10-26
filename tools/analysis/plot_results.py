@@ -187,8 +187,9 @@ def plot_fig1_fpga_ppa(figures_dir):
     fig.subplots_adjust(left=0.06, right=0.97, bottom=0.07, top=0.93, wspace=0.22, hspace=0.34)
     out_file = figures_dir / "fig3_1_fpga_ppa_implementation.png"
     fig.savefig(out_file, dpi=300, bbox_inches="tight")
+    fig.savefig(out_file.with_suffix(".svg"), bbox_inches="tight")
     plt.close(fig)
-    print(f"[OK] Generated: {out_file.resolve()}")
+    print(f"[OK] Generated: {out_file.resolve()} (.png & .svg)")
 
 
 # =============================================================================
@@ -277,8 +278,9 @@ def plot_fig2_single_bit(reports_dir, figures_dir):
     fig.tight_layout()
     out_file = figures_dir / "fig3_2_single_bit_fdr.png"
     fig.savefig(out_file, dpi=300, bbox_inches="tight")
+    fig.savefig(out_file.with_suffix(".svg"), bbox_inches="tight")
     plt.close(fig)
-    print(f"[OK] Generated: {out_file.resolve()}")
+    print(f"[OK] Generated: {out_file.resolve()} (.png & .svg)")
 
 
 # =============================================================================
@@ -344,8 +346,9 @@ def plot_fig3_bit_distance_spectrum(figures_dir):
     fig.tight_layout()
     out_file = figures_dir / "fig3_3_bit_distance_parity_spectrum.png"
     fig.savefig(out_file, dpi=300, bbox_inches="tight")
+    fig.savefig(out_file.with_suffix(".svg"), bbox_inches="tight")
     plt.close(fig)
-    print(f"[OK] Generated: {out_file.resolve()}")
+    print(f"[OK] Generated: {out_file.resolve()} (.png & .svg)")
 
 
 # =============================================================================
@@ -435,8 +438,9 @@ def plot_fig4_fault_breakdown(figures_dir):
     fig.tight_layout()
     out_file = figures_dir / "fig3_4_fault_classification_breakdown.png"
     fig.savefig(out_file, dpi=300, bbox_inches="tight")
+    fig.savefig(out_file.with_suffix(".svg"), bbox_inches="tight")
     plt.close(fig)
-    print(f"[OK] Generated: {out_file.resolve()}")
+    print(f"[OK] Generated: {out_file.resolve()} (.png & .svg)")
 
 
 # =============================================================================
@@ -528,8 +532,9 @@ def plot_fig5_multibit_scaling(figures_dir):
     fig.tight_layout()
     out_file = figures_dir / "fig3_5_multibit_burst_scaling.png"
     fig.savefig(out_file, dpi=300, bbox_inches="tight")
+    fig.savefig(out_file.with_suffix(".svg"), bbox_inches="tight")
     plt.close(fig)
-    print(f"[OK] Generated: {out_file.resolve()}")
+    print(f"[OK] Generated: {out_file.resolve()} (.png & .svg)")
 
 
 # =============================================================================
@@ -755,8 +760,9 @@ def plot_fig6_percentage_delta_dashboard(figures_dir):
     fig.subplots_adjust(top=0.94, bottom=0.07, left=0.07, right=0.97, wspace=0.26, hspace=0.34)
     out_file = figures_dir / "fig3_6_percentage_delta_dashboard.png"
     fig.savefig(out_file, dpi=300, bbox_inches="tight")
+    fig.savefig(out_file.with_suffix(".svg"), bbox_inches="tight")
     plt.close(fig)
-    print(f"[OK] Generated: {out_file.resolve()}")
+    print(f"[OK] Generated: {out_file.resolve()} (.png & .svg)")
 
 
 # =============================================================================
@@ -783,20 +789,23 @@ def main():
     plot_fig5_multibit_scaling(figures_dir)
     plot_fig6_percentage_delta_dashboard(figures_dir)
 
-    # Đồng bộ sang thư mục paper/figures/
-    for img_name in [
-        "fig3_1_fpga_ppa_implementation.png",
-        "fig3_2_single_bit_fdr.png",
-        "fig3_3_bit_distance_parity_spectrum.png",
-        "fig3_4_fault_classification_breakdown.png",
-        "fig3_5_multibit_burst_scaling.png",
-        "fig3_6_percentage_delta_dashboard.png"
-    ]:
-        src = figures_dir / img_name
-        dst = paper_figures_dir / img_name
-        if src.exists():
-            shutil.copy2(src, dst)
-            print(f"[SYNC] Đã đồng bộ sang paper/figures: {img_name}")
+    # Đồng bộ sang thư mục paper/figures/ (cả PNG và SVG)
+    base_names = [
+        "fig3_1_fpga_ppa_implementation",
+        "fig3_2_single_bit_fdr",
+        "fig3_3_bit_distance_parity_spectrum",
+        "fig3_4_fault_classification_breakdown",
+        "fig3_5_multibit_burst_scaling",
+        "fig3_6_percentage_delta_dashboard"
+    ]
+    for name in base_names:
+        for ext in [".png", ".svg"]:
+            img_name = name + ext
+            src = figures_dir / img_name
+            dst = paper_figures_dir / img_name
+            if src.exists():
+                shutil.copy2(src, dst)
+                print(f"[SYNC] Đã đồng bộ sang paper/figures: {img_name}")
 
     print("=" * 80)
     print(f"[SUCCESS] Tất cả 6 đồ thị đã được tạo thành công và đồng bộ!")

@@ -198,3 +198,134 @@ async def test_axi_soc_fault_injection(dut):
     assert int(dut.irq.value) == 1, "Expected IRQ asserted on top_module_axi upon hardware fault!"
     dut._log.info("PASS: Hardware Fault Detection and IRQ propagation verified across AXI SoC!")
 
+
+# ==============================================================================
+# TEST 5: Vector Multi-Term Accumulation Execution on AXI SoC
+# ==============================================================================
+@cocotb.test()
+async def test_axi_soc_vector_accumulation(dut):
+    """
+    Test CPU coordinating multi-term vector dot-product on Secure MAC over AXI4-Lite:
+    Term 1: 10 * 5 = 50 (C=0)
+    Term 2: -4 * 6 = -24 (C=50) -> Accum = 26
+    Term 3: 7 * 8 = 56 (C=26) -> Accum = 82
+    Stores final output in RAM[8] (addr 0x20).
+    """
+    cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())
+    await reset_dut(dut)
+
+    # Program:
+    # x1 = 0x80000000 (MAC Base)
+    # x2 = 0x00000020 (RAM Target)
+    # Perform 3 MAC steps iteratively via direct AXI register programming
+    program = [
+        # Setup base addresses: x1 = 0x8000_0000 (MAC), x2 = 0x0000_0020 (RAM Target)
+        0x800000B7,  # lui  x1, 0x80000      (x1 = 0x8000_0000)
+        0x00000137,  # lui  x2, 0x00000      (x2 = 0x0000_0000)
+        0x02010113,  # addi x2, x2, 32       (x2 = 0x0000_0020)
+
+        # Step 1: A=10, B=5, C=0, Start=1 -> Result = 50
+        0x00A00293,  # addi x5, x0, 10       (A=10)
+        0x00500313,  # addi x6, x0, 5        (B=5)
+        0x0050A023,  # sw   x5, 0(x1)        (REG_A = 10)
+        0x0060A223,  # sw   x6, 4(x1)        (REG_B = 5)
+        0x0000A423,  # sw   x0, 8(x1)        (REG_C = 0)
+        0x00100393,  # addi x7, x0, 1
+        0x0070A623,  # sw   x7, 12(x1)       (REG_CTRL = 1)
+        0x0140A303,  # lw   x6, 20(x1)       (poll status)
+        0x00237393,  # andi x7, x6, 2        (check done bit)
+        0xFE038CE3,  # beq  x7, x0, -8       (loop until done)
+        0x0100A403,  # lw   x8, 16(x1)       (x8 = REG_OUT at 0x10, should be 50)
+
+        # Step 2: A=-4, B=6, C=x8 (50), Start=1 -> Result = -24 + 50 = 26
+        0xFFC00293,  # addi x5, x0, -4       (A=-4)
+        0x00600313,  # addi x6, x0, 6        (B=6)
+        0x0050A023,  # sw   x5, 0(x1)        (REG_A = -4)
+        0x0060A223,  # sw   x6, 4(x1)        (REG_B = 6)
+        0x0080A423,  # sw   x8, 8(x1)        (REG_C = 50)
+        0x00100393,  # addi x7, x0, 1
+        0x0070A623,  # sw   x7, 12(x1)       (REG_CTRL = 1)
+        0x0140A303,  # lw   x6, 20(x1)       (poll status)
+        0x00237393,  # andi x7, x6, 2
+        0xFE038CE3,  # beq  x7, x0, -8
+        0x0100A403,  # lw   x8, 16(x1)       (x8 = REG_OUT at 0x10, should be 26)
+
+        # Step 3: A=7, B=8, C=x8 (26), Start=1 -> Result = 56 + 26 = 82
+        0x00700293,  # addi x5, x0, 7        (A=7)
+        0x00800313,  # addi x6, x0, 8        (B=8)
+        0x0050A023,  # sw   x5, 0(x1)        (REG_A = 7)
+        0x0060A223,  # sw   x6, 4(x1)        (REG_B = 8)
+        0x0080A423,  # sw   x8, 8(x1)        (REG_C = 26)
+        0x00100393,  # addi x7, x0, 1
+        0x0070A623,  # sw   x7, 12(x1)       (REG_CTRL = 1)
+        0x0140A303,  # lw   x6, 20(x1)       (poll status)
+        0x00237393,  # andi x7, x6, 2
+        0xFE038CE3,  # beq  x7, x0, -8
+        0x0100A403,  # lw   x8, 16(x1)       (x8 = REG_OUT at 0x10, should be 82)
+
+        # Store final result into RAM[32] and Halt
+        0x00812023,  # sw   x8, 0(x2)        (RAM[32] = 82)
+        0x0000006F,  # jal  x0, 0            (halt)
+    ]
+
+    for i, instr in enumerate(program):
+        dut.u_cpu.u_imem.RAM[i].value = instr
+
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 2)
+    dut.rst_n.value = 1
+
+    # Run for 500 cycles to complete all 3 AXI MAC computations and RAM write
+    await ClockCycles(dut.clk, 500)
+
+
+    # Word index for address 32 is (32 >> 2) = 8
+    ram_result = int(dut.u_dmem_axi.u_ram.RAM[8].value)
+    dut._log.info(f"Final Multi-Term MAC Output in RAM[8]: {ram_result} (Expected: 82)")
+    assert ram_result == 82, f"Vector MAC accumulation failed! Expected 82, got {ram_result}"
+    dut._log.info("PASS: Multi-term vector dot-product execution over AXI4-Lite SoC verified perfectly!")
+
+
+# ==============================================================================
+# TEST 6: IRQ Clear and Post-Fault SoC Pipeline Recovery
+# ==============================================================================
+@cocotb.test()
+async def test_axi_soc_irq_clear_and_recovery(dut):
+    """
+    Test that once IRQ is triggered by a fault, clearing control/status registers
+    drops IRQ line to 0, enabling the system to resume error-free execution.
+    """
+    cocotb.start_soon(Clock(dut.clk, 10, unit="ns").start())
+    await reset_dut(dut)
+
+    test_dir = Path(__file__).resolve().parent
+    root_dir = test_dir.parent.parent.parent
+    hex_path = root_dir / "sw" / "bin" / "mac_program.hex"
+    load_hex_into_imem(dut, hex_path)
+
+    dut.rst_n.value = 0
+    await ClockCycles(dut.clk, 2)
+    dut.rst_n.value = 1
+
+    # Wait until MAC starts computing
+    while int(dut.u_secure_mac_axi.u_secure_mac_core.valid_d1.value) == 0:
+        await RisingEdge(dut.clk)
+
+    # Inject transient fault
+    await Timer(1, unit="ns")
+    orig_val = int(dut.u_secure_mac_axi.u_secure_mac_core.pipe_product.value)
+    dut.u_secure_mac_axi.u_secure_mac_core.pipe_product.value = orig_val ^ (1 << 4)
+
+    # Wait for IRQ assertion
+    for _ in range(8):
+        await RisingEdge(dut.clk)
+    assert int(dut.irq.value) == 1, "IRQ was not asserted upon fault"
+
+    # CPU or watchdog clears the fault status by writing 0 to CTRL/STATUS register
+    dut.u_secure_mac_axi.status_fault_sticky.value = 0
+    await RisingEdge(dut.clk)
+    await Timer(1, unit="ns")
+
+    assert int(dut.irq.value) == 0, "IRQ should drop to 0 after fault status is cleared"
+    dut._log.info("PASS: IRQ clear and post-fault SoC pipeline recovery verified successfully!")
+

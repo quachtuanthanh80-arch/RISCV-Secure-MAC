@@ -64,4 +64,39 @@ module cpu_to_axi_master #(
 
     assign mem_rdata = is_read ? m_axi_rdata : {C_M_AXI_DATA_WIDTH{1'b0}};
 
+`ifndef SYNTHESIS
+    cpu_to_axi_master_sva #(
+        .C_M_AXI_ADDR_WIDTH (C_M_AXI_ADDR_WIDTH),
+        .C_M_AXI_DATA_WIDTH (C_M_AXI_DATA_WIDTH)
+    ) u_bridge_sva (
+        .clk           (clk),
+        .rst_n         (rst_n),
+        .mem_addr      (mem_addr),
+        .mem_write     (mem_write),
+        .mem_wdata     (mem_wdata),
+        .mem_valid     (mem_valid),
+        .mem_ready     (mem_ready),
+        .mem_rdata     (mem_rdata),
+        .m_axi_awaddr  (m_axi_awaddr),
+        .m_axi_awprot  (m_axi_awprot),
+        .m_axi_awvalid (m_axi_awvalid),
+        .m_axi_awready (m_axi_awready),
+        .m_axi_wdata   (m_axi_wdata),
+        .m_axi_wstrb   (m_axi_wstrb),
+        .m_axi_wvalid  (m_axi_wvalid),
+        .m_axi_wready  (m_axi_wready),
+        .m_axi_bresp   (m_axi_bresp),
+        .m_axi_bvalid  (m_axi_bvalid),
+        .m_axi_bready  (m_axi_bready),
+        .m_axi_araddr  (m_axi_araddr),
+        .m_axi_arprot  (m_axi_arprot),
+        .m_axi_arvalid (m_axi_arvalid),
+        .m_axi_arready (m_axi_arready),
+        .m_axi_rdata   (m_axi_rdata),
+        .m_axi_rresp   (m_axi_rresp),
+        .m_axi_rvalid  (m_axi_rvalid),
+        .m_axi_rready  (m_axi_rready)
+    );
+`endif
+
 endmodule
